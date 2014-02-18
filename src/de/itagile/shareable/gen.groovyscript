@@ -1,0 +1,81 @@
+def generics = {buffer, index ->
+    buffer << "<T"
+    for (int i = 1; i < index + 1; i++) {
+      buffer << ", P$i"
+    }
+    buffer << ">"
+}
+
+def params = {buffer, index, s ->
+    buffer << "("
+    for (int i = 1; i < index + 1; i++) {
+      buffer << s.replaceAll("#", "$i")
+      if (i != index)
+        buffer << ", "
+    }
+    buffer << ")"
+}
+
+def paramsDef = {buffer, index ->
+    params(buffer, index, "P# p#")  
+}
+
+def paramsCall = {buffer, index ->
+    params(buffer, index, "p#")  
+}
+
+def buffer = new StringBuffer()
+(0..8).each {index->
+    buffer << "public static"
+    generics(buffer,index)
+    buffer << "Shareable$index"
+    generics(buffer, index)
+    buffer << " create(Closure$index"
+    generics(buffer, index)
+    buffer << " c) {"
+    buffer << "  return new Shareable$index<>(c);"
+    buffer << "}"
+    buffer << "\n"
+    buffer << "  public static class Shareable$index"
+    generics(buffer, index)
+    buffer << " {"
+    buffer << "    private final Closure$index"
+    generics(buffer, index)
+    buffer << " c;"
+    buffer << "    private Map<List<Object>, T> cache = new HashMap<>();"
+    buffer << "    public Shareable$index(Closure$index"
+    generics(buffer, index)
+    buffer <<" c) {"
+    buffer << "      this.c = c;"
+    buffer << "    }"
+    buffer << "\n"
+    buffer << "    public T get"
+    paramsDef(buffer, index)
+    buffer << "{"
+    buffer << "         ArrayList<Object> key = new ArrayList<>($index);"
+    for (int k = 1; k < index + 1; k++) {
+      buffer << "         key.add(p$k);"
+    }
+    buffer << "         T result = cache.get(key);"
+    buffer << "         if (result == null) {"
+    buffer << "             result = c.call"
+    paramsCall(buffer, index)
+    buffer << ";"
+    buffer << "             cache.put(key, result);"
+    buffer << "         }"
+    buffer << "         return result;"
+    buffer << "      }"
+    buffer << "    }"
+    buffer << "\n"
+    buffer << "   public static interface Closure$index"
+    generics(buffer, index)
+    buffer << "{"
+    buffer << "       public T call"
+    paramsDef(buffer, index)
+    buffer << ";"
+    buffer << "   }"
+    buffer << "\n"
+}
+println buffer.toString()
+
+
