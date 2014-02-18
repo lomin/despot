@@ -1,20 +1,11 @@
 package de.itagile.despot;
 
-import de.itagile.despot.Despot;
-import de.itagile.despot.ResponseOptions;
-import de.itagile.despot.ResponsePartial;
 import de.itagile.specification.SpecificationPartial;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-
 import static de.itagile.despot.Despot.first;
-import static de.itagile.specification.SpecificationPartial.TRUE;
-import static de.itagile.specification.SpecificationPartial.and;
-import static de.itagile.specification.SpecificationPartial.not;
-import static org.junit.Assert.assertEquals;
+import static de.itagile.specification.SpecificationPartial.*;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -64,22 +55,6 @@ public class DespotTest {
 
     @Test
     public void returnsResponseForTrueSpecification() throws Exception {
-        Despot<String> despot = new Despot<String>() {
-            @Override
-            public String toString() {
-                String result = "";
-                Class<?> enclosingClass = getClass().getEnclosingClass();
-                Method[] methods = enclosingClass.getMethods();
-                System.out.println(enclosingClass.toString());
-                for (Method method : methods) {
-                    Annotation[] annotations = method.getAnnotations();
-                    for (Annotation annotation : annotations) {
-                        result += annotation.toString();
-                    }
-                }
-                return result;
-            }
-        };
         Despot structure =
                 first(not(TRUE), response1).
                         next(and(
