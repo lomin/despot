@@ -82,38 +82,33 @@ public class Shareable {
 
     public static class Shareable0<T> {
         private final Closure0<T> c;
-        private Map<List<Object>, T> cache = new HashMap<>();
+        private T cache;
 
         public Shareable0(Closure0<T> c) {
             this.c = c;
         }
 
         public T get() {
-            ArrayList<Object> key = new ArrayList<>(0);
-            T result = cache.get(key);
-            if (result == null) {
-                result = c.call();
-                cache.put(key, result);
+            if (cache == null) {
+                cache = c.call();
             }
-            return result;
+            return cache;
         }
     }
 
     public static class Shareable1<T, P1> {
         private final Closure1<T, P1> c;
-        private Map<List<Object>, T> cache = new HashMap<>();
+        private Map<P1, T> cache = new HashMap<>();
 
         public Shareable1(Closure1<T, P1> c) {
             this.c = c;
         }
 
         public T get(P1 p1) {
-            ArrayList<Object> key = new ArrayList<>(1);
-            key.add(p1);
-            T result = cache.get(key);
+            T result = cache.get(p1);
             if (result == null) {
                 result = c.call(p1);
-                cache.put(key, result);
+                cache.put(p1, result);
             }
             return result;
         }
