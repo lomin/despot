@@ -19,7 +19,6 @@ public class RedirectToFirstPageBracket extends ResponsePartial<ISearchParams> {
     }
 
     @Override
-    public Response response() {
-        return Response.ok().build();
+    public void modify(Response.ResponseBuilder responseBuilder) {
     }
 }

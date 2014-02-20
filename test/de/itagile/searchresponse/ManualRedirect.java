@@ -19,8 +19,7 @@ public class ManualRedirect<T extends ManualRedirect.IManualRedirect> extends Re
     }
 
     @Override
-    public Response response() {
-        return Response.ok().build();
+    public void modify(Response.ResponseBuilder responseBuilder) {
     }
 
     public static interface IManualRedirect {

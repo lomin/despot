@@ -24,9 +24,10 @@ public class MediaTypeTest {
                     Availability.AVAILABLE,
                     set(Availability.class, Availability.AVAILABLE, Availability.DELAYED));
     public static final MFieldKey<String> PRODUCT_NAME_FIELD = new MFieldKey<>("name");
-    public static final Set<JsonFormat> VARIATION_SCHEMA_JSON = set(PRICE_FIELD, AVAILABILITY_FIELD);
-    public static final MObjectKey VARIATION_FIELD = new MObjectKey("variation", VARIATION_SCHEMA_JSON);
-    public static final Set<JsonFormat> PRODUCT_SCHEMA_JSON = set(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD, VARIATION_FIELD, AVAILABILITY_FIELD, LINKS_FIELD);
+    public static final Set<JsonFormat> VARIATION_MEDIA_TYPE = set(PRICE_FIELD, AVAILABILITY_FIELD);
+    public static final MObjectKey VARIATION_FIELD = new MObjectKey("variation", VARIATION_MEDIA_TYPE);
+    public static final Set<JsonFormat> PRODUCT_MEDIA_TYPE = set(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD, VARIATION_FIELD, AVAILABILITY_FIELD, LINKS_FIELD);
+    public static final Set<JsonFormat> ERROR_MEDIA_TYPE = set(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD, VARIATION_FIELD, AVAILABILITY_FIELD, LINKS_FIELD);
 
     @SafeVarargs
     public static <T, K extends T> Set<T> set(Class<T> _, K... keys) {
@@ -62,7 +63,7 @@ public class MediaTypeTest {
                 attach(LINKS_FIELD, links);
 
         JSONObject jsonObject = new JSONObject();
-        new JsonSerializer().build(product, jsonObject, PRODUCT_SCHEMA_JSON);
+        new JsonSerializer().build(product, jsonObject, PRODUCT_MEDIA_TYPE);
         JSONObject parsedObject = (JSONObject) JSONValue.parse(jsonObject.toString());
 
         assertEquals("XY123", parsedObject.get(PRODUCT_ID_FIELD.name));
@@ -71,5 +72,4 @@ public class MediaTypeTest {
         assertEquals("AVAILABLE", variation1.get(AVAILABILITY_FIELD.name));
         assertEquals(100L, variation1.get(PRICE_FIELD.name));
     }
-
 }

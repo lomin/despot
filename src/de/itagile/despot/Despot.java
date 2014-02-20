@@ -5,6 +5,7 @@ import de.itagile.mediatype.*;
 import de.itagile.specification.Specification;
 import de.itagile.specification.SpecificationPartial;
 
+import javax.ws.rs.core.Response;
 import java.util.*;
 
 import static de.itagile.specification.SpecificationPartial.and;
@@ -43,16 +44,8 @@ public class Despot<ParamType> {
         }, option, status);
     }
 
-    public <ResponseType, MediaType> MediaTyped mediaType(Class<ResponseType> responseClass, int status, Set<MediaType> mediaType) {
-        return new MediaTyped().mediaType(status, mediaType);
-    }
-
-    public DespotElement complete(ParamType param) {
-        DespotElement despotElement = new DespotElement();
-        for (DespotPartialElement element : elements) {
-            despotElement.add(element.specification.create(param), element.response.create(param));
-        }
-        return despotElement;
+    public <ResponseType, MediaType extends Format<ResponseType>> MediaTyped mediaType(Class<ResponseType> responseClass, int status, Set<MediaType> mediaType) {
+        return new MediaTyped<ResponseType, MediaType>().mediaType(status, mediaType);
     }
 
     public static <T> Despot<T> first(SpecificationPartial<T> specification, ResponsePartial<T> option, int status) {
@@ -61,6 +54,10 @@ public class Despot<ParamType> {
 
     public static <ParamType> PreDespot<ParamType> pre(SpecificationPartial<ParamType> specification) {
         return new PreDespot<>(specification);
+    }
+
+    public Despot<ParamType> error(Class<? extends Exception> exception, int status) {
+        return this;
     }
 
     public static class PreDespot<ParamType> extends Despot<ParamType> {
@@ -98,19 +95,30 @@ public class Despot<ParamType> {
             return this;
         }
 
-        public ResponseType response(ParamType param,  ResponseType result) {
+        public Response response(ParamType param,  ResponseType result) {
             for (DespotPartialElement element : elements) {
                 Specification specification = element.specification.create(param);
                 if (specification.isTrue()) {
                     Entity entity =  element.response.response2();
-                    Set<MediaType> mediaType = types.get(element.status);
+                    int status = element.status;
+                    Set<MediaType> mediaType = types.get(status);
                     for (Format<ResponseType> key : mediaType) {
                         key.put(entity, result);
                     }
-                    return result;
+                    Response.ResponseBuilder responseBuilder = getResponseBuilderByStatus(status, result);
+                    element.response.modify(responseBuilder);
+                    return responseBuilder.build();
                 }
             }
             throw new IllegalStateException();
+        }
+
+        private Response.ResponseBuilder getResponseBuilderByStatus(int status, ResponseType entity) {
+            if (status == 200) {
+                return Response.ok(entity);
+            } else {
+                return Response.status(status).entity(entity);
+            }
         }
     }
 }

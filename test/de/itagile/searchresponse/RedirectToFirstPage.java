@@ -23,8 +23,8 @@ public class RedirectToFirstPage extends ResponsePartial<ISearchParams> {
     }
 
     @Override
-    public Response response() {
-        return Response.status(301).build();
+    public void modify(Response.ResponseBuilder response) {
+        response.header("redirect-header", "redirect-value");
     }
 
     @Override

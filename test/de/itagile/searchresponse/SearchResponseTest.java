@@ -1,14 +1,12 @@
 package de.itagile.searchresponse;
 
 import de.itagile.despot.Despot;
-import de.itagile.despot.DespotElement;
 import de.itagile.despot.ResponsePartial;
 import de.itagile.mediatype.JsonFormat;
 import de.itagile.mediatype.MediaTypeTest;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,14 +35,18 @@ import static org.junit.Assert.assertEquals;
 
 public class SearchResponseTest {
 
+    private ResponsePartial<ISearchParams> add_tracking_header(ResponsePartial<ISearchParams> fullResponse) {
+        return fullResponse;
+    }
+
     @Test
     public void integrationTest() throws Exception {
-        Despot<ISearchParams> response =
+        Despot<ISearchParams> despot =
         first(
                 is_invalid_page(),
                 redirect_to_first_page(), 301).
         next(
-            and(is_invalid_uri(), is_manual_redirect_possible()),
+                and(is_invalid_uri(), is_manual_redirect_possible()),
                 manual_redirect(), 301).
         next(
             and(is_invalid_uri(), not(is_manual_redirect_possible())),
@@ -66,7 +68,7 @@ public class SearchResponseTest {
         next(
             pre(not(is_partial_menu())).
                     next(
-                        is_page_nr_out_of_range(),
+                            is_page_nr_out_of_range(),
                             redirect_to_first_page_full(), 301).
                     next(
                             is_result_ok(),
@@ -76,19 +78,28 @@ public class SearchResponseTest {
                 manual_redirect(), 301).
         next(is_step_up_possible(),
                 step_up(), 301).
-        last(redirect_to_first_page(), 301);
+        last(redirect_to_first_page(), 301).
+        error(StepUpException.class, 503).
+        error(RedirectException.class, 504);
 
-        Despot<ISearchParams>.MediaTyped<Map, JsonFormat> typedResponse =
-                response.
-                        mediaType(Map.class, 200, MediaTypeTest.PRODUCT_SCHEMA_JSON).
-                        mediaType(301, MediaTypeTest.PRODUCT_SCHEMA_JSON);
+        Despot<ISearchParams>.MediaTyped<Map, JsonFormat> categoryResponse =
+                despot.
+                        mediaType(Map.class, 200, MediaTypeTest.PRODUCT_MEDIA_TYPE).
+                        mediaType(301, MediaTypeTest.PRODUCT_MEDIA_TYPE).
+                        mediaType(503, MediaTypeTest.ERROR_MEDIA_TYPE).
+                        mediaType(504, MediaTypeTest.ERROR_MEDIA_TYPE);
 
-        Map result = typedResponse.response(new SearchParams(), new HashMap());
-        assertEquals("AVAILABLE", result.get("availability"));
-        assertEquals("testId123", result.get("productId"));
-    }
+        /*
+            public Response category(HttpServletRequest request, String sortBy, Integer pageNr, Integer pageSize, String menuPath):
+         */
 
-    private ResponsePartial<ISearchParams> add_tracking_header(ResponsePartial<ISearchParams> fullResponse) {
-        return fullResponse;
+                Response response = categoryResponse.response(new SearchParams(), new HashMap());
+
+                assertEquals(301, response.getStatus());
+                assertEquals("redirect-value", response.getMetadata().getFirst("redirect-header"));
+
+                Map result = (Map) response.getEntity();
+                assertEquals("AVAILABLE", result.get("availability"));
+                assertEquals("testId123", result.get("productId"));
     }
 }

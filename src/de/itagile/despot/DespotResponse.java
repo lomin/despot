@@ -6,7 +6,7 @@ import javax.ws.rs.core.Response;
 
 public interface DespotResponse {
 
-    Response response();
+    void modify(Response.ResponseBuilder responseBuilder);
 
     Entity response2();
 }
