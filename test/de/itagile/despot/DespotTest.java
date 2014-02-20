@@ -38,10 +38,10 @@ public class DespotTest {
     @Test
     public void createsNewTreeWithParams() throws Exception {
         Despot structure =
-                first(spec, response1).
-                        next(spec, response2).
-                        next(spec, response3).
-                        next(spec, response4);
+                first(spec, response1, 301).
+                        next(spec, response2, 301).
+                        next(spec, response3, 301).
+                        next(spec, response4, 301);
 
         structure.complete("test");
 
@@ -56,16 +56,16 @@ public class DespotTest {
     @Test
     public void returnsResponseForTrueSpecification() throws Exception {
         Despot structure =
-                first(not(TRUE), response1).
+                first(not(TRUE), response1, 301).
                         next(and(
                                 TRUE,
                                 not(TRUE)),
-                                response2).
-                        next(TRUE, response3).
-                        next(TRUE, response4);
+                                response2, 301).
+                        next(TRUE, response3, 301).
+                        next(TRUE, response4, 301);
 
-        ResponseOptions responseOptions = structure.complete("test");
-        responseOptions.response();
+        DespotElement despotElement = structure.complete("test");
+        despotElement.response();
 
         verify(response1, times(0)).response();
         verify(response2, times(0)).response();

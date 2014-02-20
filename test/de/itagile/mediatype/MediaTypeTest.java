@@ -2,126 +2,74 @@ package de.itagile.mediatype;
 
 import de.itagile.ces.Entity;
 import de.itagile.ces.HashEntity;
-import de.itagile.ces.Key;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 import org.junit.Test;
 
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
 public class MediaTypeTest {
 
+    public static final MFieldKey<String> REL_FIELD = new MFieldKey<>("rel");
+    public static final MFieldKey<String> LINK_FIELD = new MFieldKey<>("link");
+    public static final Set<JsonFormat> LINK_SCHEMA_JSON = set(REL_FIELD, LINK_FIELD);
+    public static final MSetKey LINKS_FIELD = new MSetKey("links", LINK_SCHEMA_JSON);
+    public static final MFieldKey<Integer> PRICE_FIELD = new MFieldKey<>("price");
+    public static final MRequiredFieldKey<String> PRODUCT_ID_FIELD = new MRequiredFieldKey<>("productId");
+    public static final MEnumKey<Availability> AVAILABILITY_FIELD =
+            new MEnumKey<>(
+                    "availability",
+                    Availability.AVAILABLE,
+                    set(Availability.class, Availability.AVAILABLE, Availability.DELAYED));
+    public static final MFieldKey<String> PRODUCT_NAME_FIELD = new MFieldKey<>("name");
+    public static final Set<JsonFormat> VARIATION_SCHEMA_JSON = set(PRICE_FIELD, AVAILABILITY_FIELD);
+    public static final MObjectKey VARIATION_FIELD = new MObjectKey("variation", VARIATION_SCHEMA_JSON);
+    public static final Set<JsonFormat> PRODUCT_SCHEMA_JSON = set(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD, VARIATION_FIELD, AVAILABILITY_FIELD, LINKS_FIELD);
+
+    @SafeVarargs
+    public static <T, K extends T> Set<T> set(Class<T> _, K... keys) {
+        Set<T> set = new HashSet<T>();
+        Collections.addAll(set, keys);
+        return set;
+    }
+
+    @SafeVarargs
+    public static <K extends JsonFormat> Set<JsonFormat> set(K... keys) {
+        return set(JsonFormat.class, keys);
+    }
+
+
     @Test
     public void testMediaType() throws Exception {
-        MFieldKey productName = new MFieldKey("name");
-        MFieldKey productId = new MFieldKey("productId");
-        MFieldKey priceKey = new MFieldKey("price");
-        MObjectKey variationKey = new MObjectKey("variation", priceKey);
-
-        Entity variation = new HashEntity().attach(priceKey, new MIntegerField(100));
+        Entity link1 = new HashEntity().
+                attach(REL_FIELD, "rel1").
+                attach(LINK_FIELD, "http://otto.de/1");
+        Entity link2 = new HashEntity().
+                attach(REL_FIELD, "rel2").
+                attach(LINK_FIELD, "http://otto.de/2");
+        Entity variation = new HashEntity().
+                attach(PRICE_FIELD, 100).
+                attach(AVAILABILITY_FIELD, Availability.FORBIDDEN);
+        Set<Entity> links = new HashSet<>();
+        links.add(link1);
+        links.add(link2);
         Entity product = new HashEntity().
-                attach(productId, new MStringField("XY123")).
-                attach(productName, new MStringField("TestProduct")).
-                attach(variationKey, variation);
+                attach(PRODUCT_ID_FIELD, "XY123").
+                attach(PRODUCT_NAME_FIELD, "TestProduct").
+                attach(VARIATION_FIELD, variation).
+                attach(LINKS_FIELD, links);
 
-        MediaType keys = new MediaType(productId, productName, variationKey);
+        JSONObject jsonObject = new JSONObject();
+        new JsonSerializer().build(product, jsonObject, PRODUCT_SCHEMA_JSON);
+        JSONObject parsedObject = (JSONObject) JSONValue.parse(jsonObject.toString());
 
-        assertEquals(
-                "{\"variation\":{\"price\":100},\"name\":\"TestProduct\",\"productId\":\"XY123\"}",
-                keys.start(product).toString());
+        assertEquals("XY123", parsedObject.get(PRODUCT_ID_FIELD.name));
+        assertEquals("TestProduct", parsedObject.get(PRODUCT_NAME_FIELD.name));
+        JSONObject variation1 = (JSONObject) parsedObject.get("variation");
+        assertEquals("AVAILABLE", variation1.get(AVAILABILITY_FIELD.name));
+        assertEquals(100L, variation1.get(PRICE_FIELD.name));
     }
 
-    public interface MKey {
-        void start(Entity e, Map result);
-    }
-
-    public class MediaType {
-        private final MKey[] keys;
-
-        public MediaType(MKey... keys) {
-            this.keys = keys;
-        }
-
-        public Map start(Entity e) {
-            JSONObject result = new JSONObject();
-            for (MKey key : keys) {
-                key.start(e, result);
-            }
-            return result;
-        }
-    }
-
-    private class MObjectKey implements Key<Entity>, MKey {
-        private final String name;
-        private final MKey[] keys;
-
-        public MObjectKey(String name, MKey... keys) {
-            this.name = name;
-            this.keys = keys;
-        }
-
-        @Override
-        public Entity getUndefined() {
-            throw new RuntimeException();
-        }
-
-        @Override
-        public void start(Entity e, Map result) {
-            Map subType = new JSONObject();
-            Entity subEntity = e.get(this);
-            result.put(name, subType);
-            for (MKey key : keys) {
-                key.start(subEntity, subType);
-            }
-        }
-    }
-
-    public class MFieldKey implements Key<MField>, MKey {
-        private final String name;
-
-        public MFieldKey(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public MField getUndefined() {
-            return null;
-        }
-
-        @Override
-        public void start(Entity e, Map result) {
-            result.put(name, e.get(this).getValue());
-        }
-    }
-
-    public abstract class MField {
-        abstract Object getValue();
-    }
-
-    private class MIntegerField extends MField {
-        private final int value;
-
-        public MIntegerField(int value) {
-            this.value = value;
-        }
-
-        @Override
-        Integer getValue() {
-            return value;
-        }
-    }
-
-    private class MStringField extends MField {
-        private final String value;
-
-        public MStringField(String value) {
-            this.value = value;
-        }
-
-        @Override
-        String getValue() {
-            return value;
-        }
-    }
 }

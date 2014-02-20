@@ -1,34 +1,35 @@
 package de.itagile.despot;
 
+import de.itagile.ces.Entity;
+import de.itagile.mediatype.*;
 import de.itagile.specification.Specification;
 import de.itagile.specification.SpecificationPartial;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static de.itagile.specification.SpecificationPartial.and;
 
 public class Despot<ParamType> {
 
-    private final List<ResponseStructureElement> options = new ArrayList<>();
+    private final List<DespotPartialElement> elements = new ArrayList<>();
 
-    private Despot<ParamType> addOption(SpecificationPartial<ParamType> specification, ResponsePartial<ParamType> option) {
-        this.options.add(new ResponseStructureElement(specification, option));
+    private Despot<ParamType> addOption(SpecificationPartial<ParamType> specification, ResponsePartial<ParamType> option, int status) {
+        this.elements.add(new DespotPartialElement(specification, option, status));
         return this;
     }
 
-    public Despot<ParamType> next(SpecificationPartial<ParamType> specification, ResponsePartial<ParamType> option) {
-        return addOption(specification, option);
+    public Despot<ParamType> next(SpecificationPartial<ParamType> specification, ResponsePartial<ParamType> option, int status) {
+        return addOption(specification, option, status);
     }
 
     public Despot<ParamType> next(Despot<ParamType> preDespot) {
-        for(ResponseStructureElement element: preDespot.options) {
-            options.add(element);
+        for(DespotPartialElement element: preDespot.elements) {
+            elements.add(element);
         }
         return this;
     }
 
-    public Despot<ParamType> last(ResponsePartial<ParamType> option) {
+    public Despot<ParamType> last(ResponsePartial<ParamType> option, int status) {
         return addOption(new SpecificationPartial<ParamType>() {
             @Override
             public Specification create(ParamType param) {
@@ -39,19 +40,23 @@ public class Despot<ParamType> {
             public boolean isTrue() {
                 return true;
             }
-        }, option);
+        }, option, status);
     }
 
-    public ResponseOptions complete(ParamType param) {
-        ResponseOptions responseOptions = new ResponseOptions();
-        for (ResponseStructureElement option : options) {
-            responseOptions.add(option.specification.create(param), option.response.create(param));
+    public <ResponseType, MediaType> MediaTyped mediaType(Class<ResponseType> responseClass, int status, Set<MediaType> mediaType) {
+        return new MediaTyped().mediaType(status, mediaType);
+    }
+
+    public DespotElement complete(ParamType param) {
+        DespotElement despotElement = new DespotElement();
+        for (DespotPartialElement element : elements) {
+            despotElement.add(element.specification.create(param), element.response.create(param));
         }
-        return responseOptions;
+        return despotElement;
     }
 
-    public static <T> Despot<T> first(SpecificationPartial<T> specification, ResponsePartial<T> option) {
-        return new Despot<T>().addOption(specification, option);
+    public static <T> Despot<T> first(SpecificationPartial<T> specification, ResponsePartial<T> option, int status) {
+        return new Despot<T>().addOption(specification, option, status);
     }
 
     public static <ParamType> PreDespot<ParamType> pre(SpecificationPartial<ParamType> specification) {
@@ -66,19 +71,46 @@ public class Despot<ParamType> {
             this.s = s;
         }
 
-        public PreDespot<ParamType> next(SpecificationPartial<ParamType> specification, ResponsePartial<ParamType> option) {
-            super.next(and(s, specification), option);
+        public PreDespot<ParamType> next(SpecificationPartial<ParamType> specification, ResponsePartial<ParamType> option, int status) {
+            super.next(and(s, specification), option, status);
             return this;
         }
     }
 
-    private class ResponseStructureElement {
+    private class DespotPartialElement {
         private final SpecificationPartial<ParamType> specification;
         private final ResponsePartial<ParamType> response;
+        private int status;
 
-        private ResponseStructureElement(SpecificationPartial<ParamType> specification, ResponsePartial<ParamType> response) {
+        private DespotPartialElement(SpecificationPartial<ParamType> specification, ResponsePartial<ParamType> response, int status) {
             this.specification = specification;
             this.response = response;
+            this.status = status;
+        }
+    }
+
+    public class MediaTyped<ResponseType, MediaType extends Format<ResponseType>> {
+
+        private final Map<Integer, Set<MediaType>> types = new HashMap<>();
+
+        public MediaTyped<ResponseType, MediaType> mediaType(int status, Set<MediaType> mediaType) {
+            types.put(status, mediaType);
+            return this;
+        }
+
+        public ResponseType response(ParamType param,  ResponseType result) {
+            for (DespotPartialElement element : elements) {
+                Specification specification = element.specification.create(param);
+                if (specification.isTrue()) {
+                    Entity entity =  element.response.response2();
+                    Set<MediaType> mediaType = types.get(element.status);
+                    for (Format<ResponseType> key : mediaType) {
+                        key.put(entity, result);
+                    }
+                    return result;
+                }
+            }
+            throw new IllegalStateException();
         }
     }
 }
