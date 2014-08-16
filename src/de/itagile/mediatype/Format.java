@@ -4,5 +4,6 @@ import de.itagile.ces.Entity;
 
 public interface Format<T> {
 
-    void put(Entity e, T result);
+    void serialize(Entity e, T result);
+
 }

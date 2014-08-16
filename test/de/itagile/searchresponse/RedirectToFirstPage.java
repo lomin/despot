@@ -31,6 +31,7 @@ public class RedirectToFirstPage extends ResponsePartial<ISearchParams> {
     public Entity response2() {
         Entity e = new HashEntity();
         e.attach(MediaTypeTest.PRODUCT_ID_FIELD, "testId123");
+        e.attach(MediaTypeTest.TEMPLATE_NAME_FIELD, "/path/to/testTemplate");
         return e;
     }
 }

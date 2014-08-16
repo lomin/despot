@@ -22,13 +22,13 @@ public class MObjectKey implements Key<Entity>, JsonFormat {
     }
 
     @Override
-    public void put(Entity e, Map result) {
+    public void serialize(Entity e, Map result) {
         Entity subEntity = e.get(this);
         if (subEntity == null) return;
         Map subType = new JSONObject();
         result.put(name, subType);
         for (JsonFormat key : keys) {
-            key.put(subEntity, subType);
+            key.serialize(subEntity, subType);
         }
     }
 }

@@ -1,7 +1,7 @@
 package de.itagile.despot;
 
 import de.itagile.ces.Entity;
-import de.itagile.mediatype.*;
+import de.itagile.mediatype.Format;
 import de.itagile.specification.Specification;
 import de.itagile.specification.SpecificationPartial;
 
@@ -13,9 +13,11 @@ import static de.itagile.specification.SpecificationPartial.and;
 public class Despot<ParamType> {
 
     private final List<DespotPartialElement> elements = new ArrayList<>();
+    private final Set<Integer> allStatus = new HashSet<>();
 
     private Despot<ParamType> addOption(SpecificationPartial<ParamType> specification, ResponsePartial<ParamType> option, int status) {
         this.elements.add(new DespotPartialElement(specification, option, status));
+        this.allStatus.add(status);
         return this;
     }
 
@@ -24,7 +26,7 @@ public class Despot<ParamType> {
     }
 
     public Despot<ParamType> next(Despot<ParamType> preDespot) {
-        for(DespotPartialElement element: preDespot.elements) {
+        for (DespotPartialElement element : preDespot.elements) {
             elements.add(element);
         }
         return this;
@@ -59,6 +61,55 @@ public class Despot<ParamType> {
     public Despot<ParamType> error(Class<? extends Exception> exception, int status) {
         return this;
     }
+
+    private interface Serializer<T> {
+        Object serialize(Entity e);
+    }
+
+    public static interface Recreatable<T> {
+        T recreate();
+    }
+
+    Map<Integer, Serializer> serializers = new HashMap<>();
+
+    public <T> Despot status(int status, final Set<? extends Format<T>> mediaType, final Recreatable<T> recreatable) {
+        serializers.put(status, new Serializer<T>() {
+            @Override
+            public Object serialize(Entity e) {
+                T result = recreatable.recreate();
+                for (Format<T> key : mediaType) {
+                    key.serialize(e, result);
+                }
+                return result;
+            }
+        });
+        return this;
+    }
+
+    public Response response(ParamType param) {
+        for (DespotPartialElement element : elements) {
+            Specification specification = element.specification.create(param);
+            if (specification.isTrue()) {
+                int status = element.status;
+                Entity entity = element.response.response2();
+                Serializer serializer = serializers.get(status);
+                Object result = serializer.serialize(entity);
+                Response.ResponseBuilder responseBuilder = getResponseBuilderByStatus(status, result);
+                element.response.modify(responseBuilder);
+                return responseBuilder.build();
+            }
+        }
+        throw new IllegalStateException();
+    }
+
+    private Response.ResponseBuilder getResponseBuilderByStatus(int status, Object entity) {
+        if (status == 200) {
+            return Response.ok(entity);
+        } else {
+            return Response.status(status).entity(entity);
+        }
+    }
+
 
     public static class PreDespot<ParamType> extends Despot<ParamType> {
 
@@ -95,16 +146,14 @@ public class Despot<ParamType> {
             return this;
         }
 
-        public Response response(ParamType param,  ResponseType result) {
+        public Response response(ParamType param, ResponseType result) {
             for (DespotPartialElement element : elements) {
                 Specification specification = element.specification.create(param);
                 if (specification.isTrue()) {
-                    Entity entity =  element.response.response2();
                     int status = element.status;
+                    Entity entity = element.response.response2();
                     Set<MediaType> mediaType = types.get(status);
-                    for (Format<ResponseType> key : mediaType) {
-                        key.put(entity, result);
-                    }
+                    serialize(entity, result, mediaType);
                     Response.ResponseBuilder responseBuilder = getResponseBuilderByStatus(status, result);
                     element.response.modify(responseBuilder);
                     return responseBuilder.build();
@@ -113,7 +162,13 @@ public class Despot<ParamType> {
             throw new IllegalStateException();
         }
 
-        private Response.ResponseBuilder getResponseBuilderByStatus(int status, ResponseType entity) {
+        public void serialize(Entity entity, ResponseType result, Set<MediaType> mediaType) {
+            for (Format<ResponseType> key : mediaType) {
+                key.serialize(entity, result);
+            }
+        }
+
+        private Response.ResponseBuilder getResponseBuilderByStatus(int status, Object entity) {
             if (status == 200) {
                 return Response.ok(entity);
             } else {

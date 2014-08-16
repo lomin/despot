@@ -23,7 +23,7 @@ public class MSetKey implements Key<Set<Entity>>, JsonFormat {
     }
 
     @Override
-    public void put(Entity e, Map result) {
+    public void serialize(Entity e, Map result) {
         Set<Entity> entities = e.get(this);
         if (entities == null) return;
         Set set = new HashSet<Object>();
@@ -31,7 +31,7 @@ public class MSetKey implements Key<Set<Entity>>, JsonFormat {
         for (Entity entity : entities) {
             Map kv = new JSONObject();
             for (JsonFormat key : keys) {
-                key.put(entity, kv);
+                key.serialize(entity, kv);
                 set.add(kv);
             }
         }

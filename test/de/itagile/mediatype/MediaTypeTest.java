@@ -2,11 +2,15 @@ package de.itagile.mediatype;
 
 import de.itagile.ces.Entity;
 import de.itagile.ces.HashEntity;
+import de.itagile.despot.Despot;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 
@@ -28,6 +32,9 @@ public class MediaTypeTest {
     public static final MObjectKey VARIATION_FIELD = new MObjectKey("variation", VARIATION_MEDIA_TYPE);
     public static final Set<JsonFormat> PRODUCT_MEDIA_TYPE = set(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD, VARIATION_FIELD, AVAILABILITY_FIELD, LINKS_FIELD);
     public static final Set<JsonFormat> ERROR_MEDIA_TYPE = set(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD, VARIATION_FIELD, AVAILABILITY_FIELD, LINKS_FIELD);
+    public static final MHTMLTemplateField TEMPLATE_NAME_FIELD = new MHTMLTemplateField();
+    public static final MHTMLModelKey TEMPLATE_MODEL_FIELD = new MHTMLModelKey(set(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD));
+    public static final Set<HtmlFormat> HTML_MEDIA_TYPE = set(HtmlFormat.class, TEMPLATE_NAME_FIELD, TEMPLATE_MODEL_FIELD);
 
     @SafeVarargs
     public static <T, K extends T> Set<T> set(Class<T> _, K... keys) {
@@ -63,7 +70,8 @@ public class MediaTypeTest {
                 attach(LINKS_FIELD, links);
 
         JSONObject jsonObject = new JSONObject();
-        new JsonSerializer().build(product, jsonObject, PRODUCT_MEDIA_TYPE);
+        Despot<?>.MediaTyped<Map, JsonFormat> mediaTyped = new Despot<>().new MediaTyped<>();
+        mediaTyped.serialize(product, jsonObject, PRODUCT_MEDIA_TYPE);
         JSONObject parsedObject = (JSONObject) JSONValue.parse(jsonObject.toString());
 
         assertEquals("XY123", parsedObject.get(PRODUCT_ID_FIELD.name));
@@ -71,5 +79,23 @@ public class MediaTypeTest {
         JSONObject variation1 = (JSONObject) parsedObject.get("variation");
         assertEquals("AVAILABLE", variation1.get(AVAILABILITY_FIELD.name));
         assertEquals(100L, variation1.get(PRICE_FIELD.name));
+    }
+
+    @Test
+    public void testHtmlMediaType() throws Exception {
+        Entity modelEntity = new HashEntity()
+                .attach(PRODUCT_ID_FIELD, "ModelTestProductId")
+                .attach(PRODUCT_NAME_FIELD, "ModelTestProductName");
+        Entity viewable = new HashEntity()
+                .attach(TEMPLATE_NAME_FIELD, "/path/to/template1")
+                .attach(TEMPLATE_MODEL_FIELD, modelEntity);
+
+        Viewable result = new Viewable();
+        Despot<?>.MediaTyped<Viewable, HtmlFormat> mediaTyped = new Despot<>().new MediaTyped<>();
+        mediaTyped.serialize(viewable, result, HTML_MEDIA_TYPE);
+
+        assertEquals("/path/to/template1", result.getTemplate());
+        assertEquals("ModelTestProductId", result.getModel().get("productId"));
+        assertEquals("ModelTestProductName", result.getModel().get("name"));
     }
 }

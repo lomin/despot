@@ -23,7 +23,7 @@ public class MEnumKey<T extends Enum> implements Key<T>, JsonFormat {
     }
 
     @Override
-    public void put(Entity e, Map result) {
+    public void serialize(Entity e, Map result) {
         T value = e.get(this);
         if (!keys.contains(value)) {
             value = getUndefined();
