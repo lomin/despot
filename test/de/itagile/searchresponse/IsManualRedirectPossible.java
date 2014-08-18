@@ -22,10 +22,6 @@ public class IsManualRedirectPossible<T extends IsManualRedirectPossible.IIsManu
     }
 
     public static interface IIsManualRedirectPossible {
-        Path getPath();
-
-        String findRedirectMappingByOldPath(Path path);
-
-        MenuItem getMenuItem(Path path);
+        String findRedirectMappingByOldPath(String path);
     }
 }

@@ -22,6 +22,6 @@ public class IsInvalidUri<T extends IsInvalidUri.IIsInvalidUri> extends Specific
     }
 
     public static interface IIsInvalidUri {
-
+        String getUri();
     }
 }

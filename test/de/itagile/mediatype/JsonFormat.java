@@ -1,7 +1,7 @@
 package de.itagile.mediatype;
 
-import java.util.Map;
+import org.json.simple.JSONObject;
 
-public interface JsonFormat extends Format<Map> {
+public interface JsonFormat extends Format<JSONObject> {
 
 }

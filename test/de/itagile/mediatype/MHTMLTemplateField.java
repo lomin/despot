@@ -3,8 +3,6 @@ package de.itagile.mediatype;
 import de.itagile.ces.Entity;
 import de.itagile.ces.Key;
 
-import java.util.Map;
-
 public class MHTMLTemplateField implements Key<String>, HtmlFormat {
 
     @Override

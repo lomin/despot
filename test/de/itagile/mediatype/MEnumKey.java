@@ -2,8 +2,8 @@ package de.itagile.mediatype;
 
 import de.itagile.ces.Entity;
 import de.itagile.ces.Key;
+import org.json.simple.JSONObject;
 
-import java.util.Map;
 import java.util.Set;
 
 public class MEnumKey<T extends Enum> implements Key<T>, JsonFormat {
@@ -23,7 +23,7 @@ public class MEnumKey<T extends Enum> implements Key<T>, JsonFormat {
     }
 
     @Override
-    public void serialize(Entity e, Map result) {
+    public void serialize(Entity e, JSONObject result) {
         T value = e.get(this);
         if (!keys.contains(value)) {
             value = getUndefined();

@@ -2,8 +2,7 @@ package de.itagile.mediatype;
 
 import de.itagile.ces.Entity;
 import de.itagile.ces.Key;
-
-import java.util.Map;
+import org.json.simple.JSONObject;
 
 public class MFieldKey<T> implements Key<T>, JsonFormat {
     public final String name;
@@ -18,7 +17,7 @@ public class MFieldKey<T> implements Key<T>, JsonFormat {
     }
 
     @Override
-    public void serialize(Entity e, Map result) {
+    public void serialize(Entity e, JSONObject result) {
         T value = e.get(this);
         if (value != null) {
             result.put(name, value);

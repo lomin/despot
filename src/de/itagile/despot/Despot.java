@@ -2,6 +2,7 @@ package de.itagile.despot;
 
 import de.itagile.ces.Entity;
 import de.itagile.mediatype.Format;
+import de.itagile.mediatype.MediaType;
 import de.itagile.specification.Specification;
 import de.itagile.specification.SpecificationPartial;
 
@@ -13,6 +14,7 @@ import static de.itagile.specification.SpecificationPartial.and;
 public class Despot<ParamType> {
 
     private final List<DespotPartialElement> elements = new ArrayList<>();
+    private final Map<Integer, Serializer> serializers = new HashMap<>();
     private final Set<Integer> allStatus = new HashSet<>();
 
     private Despot<ParamType> addOption(SpecificationPartial<ParamType> specification, ResponsePartial<ParamType> option, int status) {
@@ -46,10 +48,6 @@ public class Despot<ParamType> {
         }, option, status);
     }
 
-    public <ResponseType, MediaType extends Format<ResponseType>> MediaTyped mediaType(Class<ResponseType> responseClass, int status, Set<MediaType> mediaType) {
-        return new MediaTyped<ResponseType, MediaType>().mediaType(status, mediaType);
-    }
-
     public static <T> Despot<T> first(SpecificationPartial<T> specification, ResponsePartial<T> option, int status) {
         return new Despot<T>().addOption(specification, option, status);
     }
@@ -62,27 +60,8 @@ public class Despot<ParamType> {
         return this;
     }
 
-    private interface Serializer<T> {
-        Object serialize(Entity e);
-    }
-
-    public static interface Recreatable<T> {
-        T recreate();
-    }
-
-    Map<Integer, Serializer> serializers = new HashMap<>();
-
-    public <T> Despot status(int status, final Set<? extends Format<T>> mediaType, final Recreatable<T> recreatable) {
-        serializers.put(status, new Serializer<T>() {
-            @Override
-            public Object serialize(Entity e) {
-                T result = recreatable.recreate();
-                for (Format<T> key : mediaType) {
-                    key.serialize(e, result);
-                }
-                return result;
-            }
-        });
+    public <T> Despot<ParamType> status(int status, final MediaType<? extends Format<T>> mediaType, final Recreatable<T> recreatable) {
+        serializers.put(status, new Serializer<>(recreatable, mediaType));
         return this;
     }
 
@@ -94,22 +73,13 @@ public class Despot<ParamType> {
                 Entity entity = element.response.response2();
                 Serializer serializer = serializers.get(status);
                 Object result = serializer.serialize(entity);
-                Response.ResponseBuilder responseBuilder = getResponseBuilderByStatus(status, result);
+                Response.ResponseBuilder responseBuilder = Response.status(status).entity(result);
                 element.response.modify(responseBuilder);
                 return responseBuilder.build();
             }
         }
         throw new IllegalStateException();
     }
-
-    private Response.ResponseBuilder getResponseBuilderByStatus(int status, Object entity) {
-        if (status == 200) {
-            return Response.ok(entity);
-        } else {
-            return Response.status(status).entity(entity);
-        }
-    }
-
 
     public static class PreDespot<ParamType> extends Despot<ParamType> {
 
@@ -125,6 +95,24 @@ public class Despot<ParamType> {
         }
     }
 
+    public static class Serializer<T> {
+        private final Recreatable<T> recreatable;
+        private final MediaType<? extends Format<T>> mediaType;
+
+        public Serializer(Recreatable<T> recreatable, MediaType<? extends Format<T>> mediaType) {
+            this.recreatable = recreatable;
+            this.mediaType = mediaType;
+        }
+
+        public T serialize(Entity e) {
+            T result = recreatable.recreate();
+            for (Format<T> key : mediaType) {
+                key.serialize(e, result);
+            }
+            return result;
+        }
+    }
+
     private class DespotPartialElement {
         private final SpecificationPartial<ParamType> specification;
         private final ResponsePartial<ParamType> response;
@@ -137,43 +125,4 @@ public class Despot<ParamType> {
         }
     }
 
-    public class MediaTyped<ResponseType, MediaType extends Format<ResponseType>> {
-
-        private final Map<Integer, Set<MediaType>> types = new HashMap<>();
-
-        public MediaTyped<ResponseType, MediaType> mediaType(int status, Set<MediaType> mediaType) {
-            types.put(status, mediaType);
-            return this;
-        }
-
-        public Response response(ParamType param, ResponseType result) {
-            for (DespotPartialElement element : elements) {
-                Specification specification = element.specification.create(param);
-                if (specification.isTrue()) {
-                    int status = element.status;
-                    Entity entity = element.response.response2();
-                    Set<MediaType> mediaType = types.get(status);
-                    serialize(entity, result, mediaType);
-                    Response.ResponseBuilder responseBuilder = getResponseBuilderByStatus(status, result);
-                    element.response.modify(responseBuilder);
-                    return responseBuilder.build();
-                }
-            }
-            throw new IllegalStateException();
-        }
-
-        public void serialize(Entity entity, ResponseType result, Set<MediaType> mediaType) {
-            for (Format<ResponseType> key : mediaType) {
-                key.serialize(entity, result);
-            }
-        }
-
-        private Response.ResponseBuilder getResponseBuilderByStatus(int status, Object entity) {
-            if (status == 200) {
-                return Response.ok(entity);
-            } else {
-                return Response.status(status).entity(entity);
-            }
-        }
-    }
 }

@@ -3,9 +3,8 @@ package de.itagile.mediatype;
 import de.itagile.ces.Entity;
 import de.itagile.ces.Key;
 import de.itagile.ces.UndefinedEntity;
+import org.json.simple.JSONObject;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 public class MHTMLModelKey implements Key<Entity>, HtmlFormat {
@@ -21,7 +20,7 @@ public class MHTMLModelKey implements Key<Entity>, HtmlFormat {
     public void serialize(Entity e, Viewable result) {
         Entity subEntity = e.get(this);
         if (subEntity == UNDEFINED) return;
-        Map model = new HashMap();
+        JSONObject model = new JSONObject();
         result.setModel(model);
         for (JsonFormat key : keys) {
             key.serialize(subEntity, model);

@@ -5,14 +5,13 @@ import de.itagile.ces.Key;
 import org.json.simple.JSONObject;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 public class MSetKey implements Key<Set<Entity>>, JsonFormat {
     private final String name;
-    private final Set<JsonFormat> keys;
+    private final Iterable<JsonFormat> keys;
 
-    public MSetKey(String name, Set<JsonFormat> keys) {
+    public MSetKey(String name, Iterable<JsonFormat> keys) {
         this.name = name;
         this.keys = keys;
     }
@@ -23,13 +22,13 @@ public class MSetKey implements Key<Set<Entity>>, JsonFormat {
     }
 
     @Override
-    public void serialize(Entity e, Map result) {
+    public void serialize(Entity e, JSONObject result) {
         Set<Entity> entities = e.get(this);
         if (entities == null) return;
         Set set = new HashSet<Object>();
         result.put(name, set);
         for (Entity entity : entities) {
-            Map kv = new JSONObject();
+            JSONObject kv = new JSONObject();
             for (JsonFormat key : keys) {
                 key.serialize(entity, kv);
                 set.add(kv);

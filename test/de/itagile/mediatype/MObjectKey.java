@@ -4,14 +4,11 @@ import de.itagile.ces.Entity;
 import de.itagile.ces.Key;
 import org.json.simple.JSONObject;
 
-import java.util.Map;
-import java.util.Set;
-
 public class MObjectKey implements Key<Entity>, JsonFormat {
     public final String name;
-    private final Set<JsonFormat> keys;
+    private final Iterable<JsonFormat> keys;
 
-    public MObjectKey(String name, Set<JsonFormat> keys) {
+    public MObjectKey(String name, Iterable<JsonFormat> keys) {
         this.name = name;
         this.keys = keys;
     }
@@ -22,10 +19,10 @@ public class MObjectKey implements Key<Entity>, JsonFormat {
     }
 
     @Override
-    public void serialize(Entity e, Map result) {
+    public void serialize(Entity e, JSONObject result) {
         Entity subEntity = e.get(this);
         if (subEntity == null) return;
-        Map subType = new JSONObject();
+        JSONObject subType = new JSONObject();
         result.put(name, subType);
         for (JsonFormat key : keys) {
             key.serialize(subEntity, subType);
