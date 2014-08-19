@@ -1,4 +1,4 @@
-package de.itagile.ces;
+package de.itagile.model;
 
 public interface Key<T> {
 

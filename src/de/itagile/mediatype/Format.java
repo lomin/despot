@@ -1,9 +1,9 @@
 package de.itagile.mediatype;
 
-import de.itagile.ces.Entity;
+import de.itagile.model.Model;
 
 public interface Format<T> {
 
-    void serialize(Entity e, T result);
+    void transform(Model source, T target);
 
 }

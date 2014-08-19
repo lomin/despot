@@ -1,14 +1,14 @@
-package de.itagile.ces;
+package de.itagile.model;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class HashEntity implements Entity {
+public class HashModel implements Model {
 
     private Map<Key<?>, Object> components = new HashMap<>();
 
     @Override
-    public <T> Entity attach(Key<T> k, T c) {
+    public <T> Model update(Key<T> k, T c) {
         components.put(k, c);
         return this;
     }

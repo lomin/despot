@@ -1,17 +1,18 @@
-package de.itagile.mediatype;
+package de.itagile.mediatype.simpleJson;
 
-import de.itagile.ces.Entity;
-import de.itagile.ces.Key;
+import de.itagile.mediatype.simpleJson.JsonFormat;
+import de.itagile.model.Model;
+import de.itagile.model.Key;
 import org.json.simple.JSONObject;
 
 import java.util.Set;
 
-public class MEnumKey<T extends Enum> implements Key<T>, JsonFormat {
+public class EnumField<T extends Enum> implements Key<T>, JsonFormat {
     public final String name;
     private final T undefined;
     private final Set<T> keys;
 
-    public MEnumKey(String name, T undefined, Set<T> keys) {
+    public EnumField(String name, T undefined, Set<T> keys) {
         this.name = name;
         this.undefined = undefined;
         this.keys = keys;
@@ -23,7 +24,7 @@ public class MEnumKey<T extends Enum> implements Key<T>, JsonFormat {
     }
 
     @Override
-    public void serialize(Entity e, JSONObject result) {
+    public void transform(Model e, JSONObject result) {
         T value = e.get(this);
         if (!keys.contains(value)) {
             value = getUndefined();

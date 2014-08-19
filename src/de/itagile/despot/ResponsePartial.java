@@ -1,12 +1,12 @@
 package de.itagile.despot;
 
-import de.itagile.ces.Entity;
-import de.itagile.ces.HashEntity;
+import de.itagile.model.HashModel;
+import de.itagile.model.Model;
 
 public abstract class ResponsePartial<ParamType> implements Completable<ParamType, DespotResponse>, DespotResponse {
 
     @Override
-    public Entity response2() {
-        return new HashEntity();
+    public Model responseModel() {
+        return new HashModel();
     }
 }

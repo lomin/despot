@@ -1,8 +1,8 @@
-package de.itagile.ces;
+package de.itagile.model;
 
-public class UndefinedEntity implements Entity {
+public class UndefinedModel implements Model {
     @Override
-    public <T> Entity attach(Key<T> k, T c) {
+    public <T> Model update(Key<T> k, T c) {
         return this;
     }
 

@@ -1,9 +1,13 @@
 package de.itagile.mediatype;
 
-import de.itagile.ces.Entity;
-import de.itagile.ces.HashEntity;
+import de.itagile.mediatype.html.HtmlFormat;
+import de.itagile.mediatype.html.HtmlModelField;
+import de.itagile.mediatype.html.TemplateField;
+import de.itagile.mediatype.html.Viewable;
+import de.itagile.mediatype.simpleJson.*;
+import de.itagile.model.HashModel;
+import de.itagile.model.Model;
 import de.itagile.despot.Despot;
-import de.itagile.despot.Recreatable;
 import org.json.simple.JSONObject;
 import org.junit.Test;
 
@@ -15,26 +19,24 @@ import static org.junit.Assert.assertEquals;
 
 public class MediaTypeTest {
 
-    public static final MFieldKey<String> REL_FIELD = new MFieldKey<>("rel");
-    public static final MFieldKey<String> LINK_FIELD = new MFieldKey<>("link");
-    public static final MediaType<JsonFormat> LINK_SCHEMA_JSON = new MediaType<JsonFormat>().build(REL_FIELD, LINK_FIELD);
-    public static final MSetKey LINKS_FIELD = new MSetKey("links", LINK_SCHEMA_JSON);
-    public static final MFieldKey<Integer> PRICE_FIELD = new MFieldKey<>("price");
-    public static final MRequiredFieldKey<String> PRODUCT_ID_FIELD = new MRequiredFieldKey<>("productId");
-    public static final MEnumKey<Availability> AVAILABILITY_FIELD =
-            new MEnumKey<>(
+    public static final StringField<String> REL_FIELD = new StringField<>("rel");
+    public static final StringField<String> LINK_FIELD = new StringField<>("link");
+    public static final MediaType<JsonFormat> LINK_SCHEMA_JSON = new MediaType<JsonFormat>(REL_FIELD, LINK_FIELD);
+    public static final SetField LINKS_FIELD = new SetField("links", LINK_SCHEMA_JSON);
+    public static final StringField<Integer> PRICE_FIELD = new StringField<>("price");
+    public static final RequiredStringField<String> PRODUCT_ID_FIELD = new RequiredStringField<>("productId");
+    public static final EnumField<Availability> AVAILABILITY_FIELD =
+            new EnumField<>(
                     "availability",
                     Availability.AVAILABLE,
                     set(Availability.class, Availability.AVAILABLE, Availability.DELAYED));
-    public static final MFieldKey<String> PRODUCT_NAME_FIELD = new MFieldKey<>("name");
+    public static final StringField<String> PRODUCT_NAME_FIELD = new StringField<>("name");
     public static final Set<JsonFormat> VARIATION_MEDIA_TYPE = set(PRICE_FIELD, AVAILABILITY_FIELD);
-    public static final MObjectKey VARIATION_FIELD = new MObjectKey("variation", VARIATION_MEDIA_TYPE);
-    public static final MediaType<JsonFormat> PRODUCT_MEDIA_TYPE = new MediaType<JsonFormat>()
-            .build(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD, VARIATION_FIELD, AVAILABILITY_FIELD, LINKS_FIELD);
-    public static final MHTMLTemplateField TEMPLATE_NAME_FIELD = new MHTMLTemplateField();
-    public static final MHTMLModelKey TEMPLATE_MODEL_FIELD = new MHTMLModelKey(set(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD));
-    public static final MediaType<HtmlFormat> HTML_MEDIA_TYPE = new MediaType<HtmlFormat>()
-            .build(TEMPLATE_NAME_FIELD, TEMPLATE_MODEL_FIELD);
+    public static final ObjectField VARIATION_FIELD = new ObjectField("variation", VARIATION_MEDIA_TYPE);
+    public static final MediaType<JsonFormat> PRODUCT_MEDIA_TYPE = new MediaType<JsonFormat>(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD, VARIATION_FIELD, AVAILABILITY_FIELD, LINKS_FIELD);
+    public static final TemplateField TEMPLATE_NAME_FIELD = new TemplateField();
+    public static final HtmlModelField TEMPLATE_MODEL_FIELD = new HtmlModelField(set(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD));
+    public static final MediaType<HtmlFormat> HTML_MEDIA_TYPE = new MediaType<HtmlFormat>(TEMPLATE_NAME_FIELD, TEMPLATE_MODEL_FIELD);
 
     @SafeVarargs
     public static <T, K extends T> Set<T> set(Class<T> _, K... keys) {
@@ -51,57 +53,49 @@ public class MediaTypeTest {
 
     @Test
     public void testMediaType() throws Exception {
-        Entity link1 = new HashEntity().
-                attach(REL_FIELD, "rel1").
-                attach(LINK_FIELD, "http://otto.de/1");
-        Entity link2 = new HashEntity().
-                attach(REL_FIELD, "rel2").
-                attach(LINK_FIELD, "http://otto.de/2");
-        Entity variation = new HashEntity().
-                attach(PRICE_FIELD, 100).
-                attach(AVAILABILITY_FIELD, Availability.FORBIDDEN);
-        Set<Entity> links = new HashSet<>();
+        Model link1 = new HashModel().
+                update(REL_FIELD, "rel1").
+                update(LINK_FIELD, "http://otto.de/1");
+        Model link2 = new HashModel().
+                update(REL_FIELD, "rel2").
+                update(LINK_FIELD, "http://otto.de/2");
+        Model variation = new HashModel().
+                update(PRICE_FIELD, 100).
+                update(AVAILABILITY_FIELD, Availability.FORBIDDEN);
+        Set<Model> links = new HashSet<>();
         links.add(link1);
         links.add(link2);
-        Entity product = new HashEntity().
-                attach(PRODUCT_ID_FIELD, "XY123").
-                attach(PRODUCT_NAME_FIELD, "TestProduct").
-                attach(VARIATION_FIELD, variation).
-                attach(LINKS_FIELD, links);
+        Model product = new HashModel().
+                update(PRODUCT_ID_FIELD, "XY123").
+                update(PRODUCT_NAME_FIELD, "TestProduct").
+                update(VARIATION_FIELD, variation).
+                update(LINKS_FIELD, links);
 
-        JSONObject result = new Despot.Serializer<>(new Recreatable<JSONObject>() {
-            @Override
-            public JSONObject recreate() {
-                return new JSONObject();
-            }
-        }, PRODUCT_MEDIA_TYPE).serialize(product);
+        JSONObject entity = new JSONObject();
+        Despot.transform(product, entity, PRODUCT_MEDIA_TYPE);
 
-        assertEquals("XY123", result.get(PRODUCT_ID_FIELD.name));
-        assertEquals("TestProduct", result.get(PRODUCT_NAME_FIELD.name));
-        JSONObject variation1 = (JSONObject) result.get("variation");
+        assertEquals("XY123", entity.get(PRODUCT_ID_FIELD.name));
+        assertEquals("TestProduct", entity.get(PRODUCT_NAME_FIELD.name));
+        JSONObject variation1 = (JSONObject) entity.get("variation");
         assertEquals("AVAILABLE", variation1.get(AVAILABILITY_FIELD.name));
         assertEquals(100, variation1.get(PRICE_FIELD.name));
     }
 
     @Test
     public void testHtmlMediaType() throws Exception {
-        Entity modelEntity = new HashEntity()
-                .attach(PRODUCT_ID_FIELD, "ModelTestProductId")
-                .attach(PRODUCT_NAME_FIELD, "ModelTestProductName");
-        Entity viewable = new HashEntity()
-                .attach(TEMPLATE_NAME_FIELD, "/path/to/template1")
-                .attach(TEMPLATE_MODEL_FIELD, modelEntity);
+        Model modelEntity = new HashModel()
+                .update(PRODUCT_ID_FIELD, "ModelTestProductId")
+                .update(PRODUCT_NAME_FIELD, "ModelTestProductName");
+        Model viewableModel = new HashModel()
+                .update(TEMPLATE_NAME_FIELD, "/path/to/template1")
+                .update(TEMPLATE_MODEL_FIELD, modelEntity);
 
-        Viewable result = new Despot.Serializer<>(new Recreatable<Viewable>() {
-            @Override
-            public Viewable recreate() {
-                return new Viewable();
-            }
-        }, HTML_MEDIA_TYPE).serialize(viewable);
+        Viewable entity = new Viewable();
+        Despot.transform(viewableModel, entity, HTML_MEDIA_TYPE);
 
 
-        assertEquals("/path/to/template1", result.getTemplate());
-        assertEquals("ModelTestProductId", result.getModel().get("productId"));
-        assertEquals("ModelTestProductName", result.getModel().get("name"));
+        assertEquals("/path/to/template1", entity.getTemplate());
+        assertEquals("ModelTestProductId", entity.getViewModel().get("productId"));
+        assertEquals("ModelTestProductName", entity.getViewModel().get("name"));
     }
 }

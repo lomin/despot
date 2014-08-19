@@ -1,14 +1,14 @@
-package de.itagile.mediatype;
+package de.itagile.mediatype.html;
 
 import java.util.Map;
 
 public class Viewable {
 
     private String template;
-    private Map model;
+    private Map viewModel;
 
-    public void setModel(Map model) {
-        this.model = model;
+    public void setViewModel(Map viewModel) {
+        this.viewModel = viewModel;
     }
 
     public void setTemplate(String template) {
@@ -19,7 +19,7 @@ public class Viewable {
         return template;
     }
 
-    public Map getModel() {
-        return model;
+    public Map getViewModel() {
+        return viewModel;
     }
 }

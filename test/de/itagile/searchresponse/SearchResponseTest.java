@@ -1,9 +1,9 @@
 package de.itagile.searchresponse;
 
 import de.itagile.despot.Despot;
-import de.itagile.despot.Recreatable;
+import de.itagile.despot.EntityFactory;
 import de.itagile.despot.ResponsePartial;
-import de.itagile.mediatype.Viewable;
+import de.itagile.mediatype.html.Viewable;
 import de.itagile.mediatype.MediaTypeTest;
 import org.json.simple.JSONObject;
 import org.junit.Test;
@@ -54,15 +54,15 @@ public class SearchResponseTest {
                         error(RedirectException.class, 404);
 
         despot
-                .status(201, MediaTypeTest.HTML_MEDIA_TYPE, new Recreatable<Viewable>() {
+                .status(201, MediaTypeTest.HTML_MEDIA_TYPE, new EntityFactory<Viewable>() {
                     @Override
-                    public Viewable recreate() {
+                    public Viewable create() {
                         return new Viewable();
                     }
                 })
-                .status(301, MediaTypeTest.PRODUCT_MEDIA_TYPE, new Recreatable<JSONObject>() {
+                .status(301, MediaTypeTest.PRODUCT_MEDIA_TYPE, new EntityFactory<JSONObject>() {
                     @Override
-                    public JSONObject recreate() {
+                    public JSONObject create() {
                         return new JSONObject();
                     }
                 });

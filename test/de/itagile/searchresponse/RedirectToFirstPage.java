@@ -1,7 +1,7 @@
 package de.itagile.searchresponse;
 
-import de.itagile.ces.Entity;
-import de.itagile.ces.HashEntity;
+import de.itagile.model.HashModel;
+import de.itagile.model.Model;
 import de.itagile.despot.DespotResponse;
 import de.itagile.despot.ResponsePartial;
 import de.itagile.mediatype.MediaTypeTest;
@@ -28,10 +28,10 @@ public class RedirectToFirstPage extends ResponsePartial<ISearchParams> {
     }
 
     @Override
-    public Entity response2() {
-        Entity e = new HashEntity();
-        e.attach(MediaTypeTest.PRODUCT_ID_FIELD, "testId123");
-        e.attach(MediaTypeTest.TEMPLATE_NAME_FIELD, "/path/to/testTemplate");
+    public Model responseModel() {
+        Model e = new HashModel();
+        e.update(MediaTypeTest.PRODUCT_ID_FIELD, "testId123");
+        e.update(MediaTypeTest.TEMPLATE_NAME_FIELD, "/path/to/testTemplate");
         return e;
     }
 }

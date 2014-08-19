@@ -1,4 +1,4 @@
-package de.itagile.mediatype;
+package de.itagile.mediatype.simpleJson;
 
 public enum Availability {
     AVAILABLE, DELAYED, FORBIDDEN

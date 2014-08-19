@@ -6,12 +6,28 @@ public class MediaType<FormatType extends Format<?>> implements Iterable<FormatT
 
     private final Set<FormatType> mediaTypes = new HashSet<>();
 
-    public Iterator<FormatType> iterator() {
-        return mediaTypes.iterator();
+    public MediaType(FormatType... types) {
+        mediaTypes.addAll(Arrays.asList(types));
     }
 
-    public MediaType<FormatType> build(FormatType... types) {
-        mediaTypes.addAll(Arrays.asList(types));
-        return this;
+    public Iterator<FormatType> iterator() {
+        return new Iterator<FormatType>() {
+            private final Iterator<FormatType> iterator = mediaTypes.iterator();
+
+            @Override
+            public boolean hasNext() {
+                return iterator.hasNext();
+            }
+
+            @Override
+            public FormatType next() {
+                return iterator.next();
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 }

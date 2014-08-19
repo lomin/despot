@@ -1,12 +1,12 @@
-package de.itagile.mediatype;
+package de.itagile.mediatype.html;
 
-import de.itagile.ces.Entity;
-import de.itagile.ces.Key;
+import de.itagile.model.Model;
+import de.itagile.model.Key;
 
-public class MHTMLTemplateField implements Key<String>, HtmlFormat {
+public class TemplateField implements Key<String>, HtmlFormat {
 
     @Override
-    public void serialize(Entity e, Viewable result) {
+    public void transform(Model e, Viewable result) {
         String template = e.get(this);
         result.setTemplate(template);
     }

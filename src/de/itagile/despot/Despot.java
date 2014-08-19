@@ -1,6 +1,6 @@
 package de.itagile.despot;
 
-import de.itagile.ces.Entity;
+import de.itagile.model.Model;
 import de.itagile.mediatype.Format;
 import de.itagile.mediatype.MediaType;
 import de.itagile.specification.Specification;
@@ -14,7 +14,7 @@ import static de.itagile.specification.SpecificationPartial.and;
 public class Despot<ParamType> {
 
     private final List<DespotPartialElement> elements = new ArrayList<>();
-    private final Map<Integer, Serializer> serializers = new HashMap<>();
+    private final Map<Integer, EntityBuilder> entityBuilders = new HashMap<>();
     private final Set<Integer> allStatus = new HashSet<>();
 
     private Despot<ParamType> addOption(SpecificationPartial<ParamType> specification, ResponsePartial<ParamType> option, int status) {
@@ -60,8 +60,8 @@ public class Despot<ParamType> {
         return this;
     }
 
-    public <T> Despot<ParamType> status(int status, final MediaType<? extends Format<T>> mediaType, final Recreatable<T> recreatable) {
-        serializers.put(status, new Serializer<>(recreatable, mediaType));
+    public <T> Despot<ParamType> status(int status, final MediaType<? extends Format<T>> mediaType, final EntityFactory<T> entityFactory) {
+        entityBuilders.put(status, new EntityBuilder<>(entityFactory, mediaType));
         return this;
     }
 
@@ -70,10 +70,10 @@ public class Despot<ParamType> {
             Specification specification = element.specification.create(param);
             if (specification.isTrue()) {
                 int status = element.status;
-                Entity entity = element.response.response2();
-                Serializer serializer = serializers.get(status);
-                Object result = serializer.serialize(entity);
-                Response.ResponseBuilder responseBuilder = Response.status(status).entity(result);
+                Model model = element.response.responseModel();
+                EntityBuilder entityBuilder = entityBuilders.get(status);
+                Object entity = entityBuilder.transform(model);
+                Response.ResponseBuilder responseBuilder = Response.status(status).entity(entity);
                 element.response.modify(responseBuilder);
                 return responseBuilder.build();
             }
@@ -95,21 +95,25 @@ public class Despot<ParamType> {
         }
     }
 
-    public static class Serializer<T> {
-        private final Recreatable<T> recreatable;
+    public static <T> void transform(Model source, T target, MediaType<? extends Format<T>> mediaType) {
+        for (Format<T> key : mediaType) {
+            key.transform(source, target);
+        }
+    }
+
+    private class EntityBuilder<T> {
+        private final EntityFactory<T> entityFactory;
         private final MediaType<? extends Format<T>> mediaType;
 
-        public Serializer(Recreatable<T> recreatable, MediaType<? extends Format<T>> mediaType) {
-            this.recreatable = recreatable;
+        public EntityBuilder(EntityFactory<T> entityFactory, MediaType<? extends Format<T>> mediaType) {
+            this.entityFactory = entityFactory;
             this.mediaType = mediaType;
         }
 
-        public T serialize(Entity e) {
-            T result = recreatable.recreate();
-            for (Format<T> key : mediaType) {
-                key.serialize(e, result);
-            }
-            return result;
+        public T transform(Model source) {
+            T entity = entityFactory.create();
+            Despot.transform(source, entity, mediaType);
+            return entity;
         }
     }
 
@@ -124,5 +128,4 @@ public class Despot<ParamType> {
             this.status = status;
         }
     }
-
 }
