@@ -101,16 +101,16 @@ public class Despot<ParamType> {
         }
     }
 
-    private class EntityBuilder<T> {
+    private static class EntityBuilder<T> {
         private final EntityFactory<T> entityFactory;
         private final MediaType<? extends Format<T>> mediaType;
 
-        public EntityBuilder(EntityFactory<T> entityFactory, MediaType<? extends Format<T>> mediaType) {
+        private EntityBuilder(EntityFactory<T> entityFactory, MediaType<? extends Format<T>> mediaType) {
             this.entityFactory = entityFactory;
             this.mediaType = mediaType;
         }
 
-        public T transform(Model source) {
+        private T transform(Model source) {
             T entity = entityFactory.create();
             Despot.transform(source, entity, mediaType);
             return entity;
