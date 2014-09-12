@@ -4,6 +4,9 @@ import de.itagile.model.Model;
 import de.itagile.model.Key;
 import org.json.simple.JSONObject;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class EnumField<T extends Enum> implements Key<T>, JsonFormat {
@@ -29,5 +32,20 @@ public class EnumField<T extends Enum> implements Key<T>, JsonFormat {
             value = getUndefined();
         }
         result.put(name, value.name());
+    }
+
+    @Override
+    public void spec(Map spec) {
+        spec.put("name", name);
+        Map type = new HashMap();
+        type.put("name", "Enum");
+        type.put("subtype", "String");
+        type.put("default", this.undefined.toString());
+        Set values = new HashSet();
+        for (T key: keys) {
+            values.add(key.toString());
+        }
+        type.put("values", values);
+        spec.put("type", type);
     }
 }

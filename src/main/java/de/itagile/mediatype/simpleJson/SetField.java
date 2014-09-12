@@ -5,6 +5,7 @@ import de.itagile.model.Key;
 import org.json.simple.JSONObject;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class SetField implements Key<Set<Model>>, JsonFormat {
@@ -34,5 +35,10 @@ public class SetField implements Key<Set<Model>>, JsonFormat {
                 set.add(kv);
             }
         }
+    }
+
+    @Override
+    public void spec(Map spec) {
+
     }
 }

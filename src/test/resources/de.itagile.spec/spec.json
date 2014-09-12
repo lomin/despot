@@ -33,7 +33,8 @@
             "name": "application/vnd.itagile.variation+json",
             "fields": [
                 "variationId",
-                "availability"
+                "availability",
+                "price"
             ]
         },
         {
@@ -85,6 +86,12 @@
                     "SOLDOUT"
                 ],
                 "default": "AVAILABLE"
+            }
+        },
+        {
+            "name": "price",
+            "type": {
+                "name": "Integer"
             }
         },
         {

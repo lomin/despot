@@ -4,6 +4,8 @@ import de.itagile.model.Model;
 import de.itagile.model.Key;
 import org.json.simple.JSONObject;
 
+import java.util.Map;
+
 public class ObjectField implements Key<Model>, JsonFormat {
     public final String name;
     private final Iterable<JsonFormat> keys;
@@ -27,5 +29,10 @@ public class ObjectField implements Key<Model>, JsonFormat {
         for (JsonFormat key : keys) {
             key.transform(childModel, subType);
         }
+    }
+
+    @Override
+    public void spec(Map spec) {
+
     }
 }

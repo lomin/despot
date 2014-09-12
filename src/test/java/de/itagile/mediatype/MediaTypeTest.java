@@ -11,43 +11,44 @@ import de.itagile.despot.Despot;
 import org.json.simple.JSONObject;
 import org.junit.Test;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
 public class MediaTypeTest {
 
-    public static final StringField<String> REL_FIELD = new StringField<>("rel");
-    public static final StringField<String> LINK_FIELD = new StringField<>("link");
+    public static final StringField REL_FIELD = new StringField("rel");
+    public static final StringField LINK_FIELD = new StringField("link");
     public static final MediaType<JsonFormat> LINK_SCHEMA_JSON = new MediaType<JsonFormat>("application/vnd.itagile.link+json", REL_FIELD, LINK_FIELD);
     public static final SetField LINKS_FIELD = new SetField("links", LINK_SCHEMA_JSON);
-    public static final StringField<Integer> PRICE_FIELD = new StringField<>("price");
+    public static final IntegerField PRICE_FIELD = new IntegerField("price");
     public static final RequiredStringField<String> PRODUCT_ID_FIELD = new RequiredStringField<>("productId");
+    public static final Set<Availability> AVAILABILITIES = set(Availability.AVAILABLE, Availability.DELAYED, Availability.SOLDOUT);
     public static final EnumField<Availability> AVAILABILITY_FIELD =
             new EnumField<>(
                     "availability",
                     Availability.AVAILABLE,
-                    set(Availability.class, Availability.AVAILABLE, Availability.DELAYED));
-    public static final StringField<String> PRODUCT_NAME_FIELD = new StringField<>("name");
-    public static final Set<JsonFormat> VARIATION_MEDIA_TYPE = set(PRICE_FIELD, AVAILABILITY_FIELD);
+                    AVAILABILITIES);
+    public static final StringField PRODUCT_NAME_FIELD = new StringField("name");
+    public static final RequiredStringField<String> VARIATION_ID_FIELD = new RequiredStringField<>("variationId");
+    public static final MediaType<JsonFormat> VARIATION_MEDIA_TYPE = new MediaType<JsonFormat>("application/vnd.itagile.variation+json", VARIATION_ID_FIELD, PRICE_FIELD, AVAILABILITY_FIELD);
     public static final ObjectField VARIATION_FIELD = new ObjectField("variation", VARIATION_MEDIA_TYPE);
     public static final MediaType<JsonFormat> PRODUCT_MEDIA_TYPE = new MediaType<JsonFormat>("application/vnd.itagile.product+json", PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD, VARIATION_FIELD, AVAILABILITY_FIELD, LINKS_FIELD);
     public static final TemplateField TEMPLATE_NAME_FIELD = new TemplateField();
     public static final HtmlModelField TEMPLATE_MODEL_FIELD = new HtmlModelField(set(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD));
     public static final MediaType<HtmlFormat> HTML_MEDIA_TYPE = new MediaType<HtmlFormat>("application/vnd.itagile.product+html", TEMPLATE_NAME_FIELD, TEMPLATE_MODEL_FIELD);
 
-    @SafeVarargs
-    public static <T, K extends T> Set<T> set(Class<T> _, K... keys) {
-        Set<T> set = new HashSet<T>();
-        Collections.addAll(set, keys);
-        return set;
+    private static <T> Set<T> set(T... keys) {
+        Set<T> result = new HashSet<T>();
+        Collections.addAll(result, keys);
+        return result;
     }
 
     @SafeVarargs
     public static <K extends JsonFormat> Set<JsonFormat> set(K... keys) {
-        return set(JsonFormat.class, keys);
+        Set<JsonFormat> result = new HashSet<>();
+        Collections.addAll(result, keys);
+        return result;
     }
 
 
@@ -61,6 +62,7 @@ public class MediaTypeTest {
                 update(LINK_FIELD, "http://otto.de/2");
         Model variation = new HashModel().
                 update(PRICE_FIELD, 100).
+                update(VARIATION_ID_FIELD, "ABC567").
                 update(AVAILABILITY_FIELD, Availability.FORBIDDEN);
         Set<Model> links = new HashSet<>();
         links.add(link1);
@@ -97,5 +99,47 @@ public class MediaTypeTest {
         assertEquals("/path/to/template1", entity.getTemplate());
         assertEquals("ModelTestProductId", entity.getViewModel().get("productId"));
         assertEquals("ModelTestProductName", entity.getViewModel().get("name"));
+    }
+
+    @Test
+    public void testMediaTypeHasSpecRepresentation() throws Exception {
+        Map htmlSpec = new HashMap();
+        htmlSpec.put("name", "application/vnd.itagile.variation+json");
+
+        Set fields = new HashSet();
+
+        Map variationId = new HashMap();
+        variationId.put("name", "variationId");
+        Map variationIdType = new HashMap();
+        variationIdType.put("name", "String");
+        variationIdType.put("required", "true");
+        variationId.put("type", variationIdType);
+        fields.add(variationId);
+
+        Map availability = new HashMap();
+        availability.put("name", "availability");
+        Map<Object, Object> availabilityType = new HashMap<>();
+        availabilityType.put("name", "Enum");
+        availabilityType.put("subtype", "String");
+        Set<String> availabilityTypeValues = new HashSet<>();
+        availabilityTypeValues.add("AVAILABLE");
+        availabilityTypeValues.add("DELAYED");
+        availabilityTypeValues.add("SOLDOUT");
+        availabilityType.put("values", availabilityTypeValues);
+        availabilityType.put("default", "AVAILABLE");
+        availability.put("type", availabilityType);
+        fields.add(availability);
+
+        Map price = new HashMap();
+        price.put("name", "price");
+        Map priceType = new HashMap();
+        priceType.put("name", "Integer");
+        price.put("type", priceType);
+        fields.add(price);
+
+        htmlSpec.put("fields", fields);
+
+        assertEquals(htmlSpec, VARIATION_MEDIA_TYPE.getSpec());
+
     }
 }

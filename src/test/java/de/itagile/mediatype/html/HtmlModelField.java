@@ -6,6 +6,7 @@ import de.itagile.model.Model;
 import de.itagile.model.UndefinedModel;
 import org.json.simple.JSONObject;
 
+import java.util.Map;
 import java.util.Set;
 
 public class HtmlModelField implements Key<Model>, HtmlFormat {
@@ -26,6 +27,11 @@ public class HtmlModelField implements Key<Model>, HtmlFormat {
         for (JsonFormat key : keys) {
             key.transform(subEntity, model);
         }
+    }
+
+    @Override
+    public void spec(Map spec) {
+
     }
 
     @Override

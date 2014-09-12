@@ -72,6 +72,11 @@ public class ApiTest {
     }
 
     @Test
+    public void fulfillsTheFullSpec() throws Exception {
+        assertEquals(despot, despot.verify("/de.itagile.spec/spec.json"));
+    }
+
+    @Test
     public void doesNotFulfillsTheSpecIfNoMatchingEndpointUri() throws Exception {
         Map spec =
                 spec()
@@ -129,10 +134,5 @@ public class ApiTest {
                                                         .addStatusCode(404, "text/html")))
                         .build();
         assertFalse(despot.verifyAllEndpoints(spec));
-    }
-
-    @Test
-    public void fulfillsTheFullSpec() throws Exception {
-        assertEquals(despot, despot.verify("/de.itagile.spec/spec.json"));
     }
 }

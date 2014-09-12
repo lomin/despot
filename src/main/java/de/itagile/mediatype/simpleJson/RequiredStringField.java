@@ -4,6 +4,9 @@ import de.itagile.model.Model;
 import de.itagile.model.Key;
 import org.json.simple.JSONObject;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class RequiredStringField<T> implements Key<T>, JsonFormat {
     public final String name;
 
@@ -13,7 +16,7 @@ public class RequiredStringField<T> implements Key<T>, JsonFormat {
 
     @Override
     public T getUndefined() {
-        throw new IllegalStateException();
+        throw new IllegalStateException(this.name + " has been violated. It is required but has not been set.");
     }
 
     @Override
@@ -21,4 +24,12 @@ public class RequiredStringField<T> implements Key<T>, JsonFormat {
         T value = e.get(this);
         result.put(name, value);
     }
-}
+
+    @Override
+    public void spec(Map spec) {
+        spec.put("name", name);
+        Map type = new HashMap();
+        type.put("name", "String");
+        type.put("required", "true");
+        spec.put("type", type);
+    }}

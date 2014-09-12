@@ -37,6 +37,19 @@ public class MediaType<FormatType extends Format<?>> implements Iterable<FormatT
         return name;
     }
 
+    public Map getSpec() {
+        Map spec = new HashMap();
+        spec.put("name", this.name);
+        Set fields = new HashSet();
+        spec.put("fields", fields);
+        for(FormatType format: mediaTypes) {
+            Map subSpec = new HashMap();
+            format.spec(subSpec);
+            fields.add(subSpec);
+        }
+        return spec;
+    }
+
     @Override
     public String toString() {
         return "MediaType{" +
