@@ -5,5 +5,6 @@ public interface IProductSearchParams
         IsInvalidUri.IIsInvalidUri,
         IsManualRedirectPossible.IIsManualRedirectPossible,
         ManualRedirect.IManualRedirect,
-        IsInvalidPage.Pageable {
+        IsInvalidPage.Pageable,
+        FullResponse.IFullResponseParams {
 }

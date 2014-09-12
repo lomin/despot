@@ -92,28 +92,33 @@ public class Despot<ParamType> {
             Specification specification = element.specification.create(param);
             if (specification.isTrue()) {
                 int status = element.status;
-                Model model = element.response.responseModel();
+                DespotResponse response = element.response.create(param);
+                Model model = response.responseModel();
                 EntityBuilder entityBuilder = entityBuilders.get(status);
                 Object entity = null;
                 if (entityBuilder != null) {
                     entity = entityBuilder.transform(model);
                 }
                 Response.ResponseBuilder responseBuilder = Response.status(status).entity(entity);
-                element.response.modify(responseBuilder);
+                response.modify(responseBuilder);
                 return responseBuilder.build();
             }
         }
         throw new IllegalStateException();
     }
 
-    public Despot<ParamType> verify(String path) throws IOException, ParseException {
-        InputStream specStream = getClass().getResourceAsStream(path);
-        Map spec = (Map) new JSONParser().parse(new InputStreamReader(specStream));
-        boolean hasBeenVerified = verifyAllEndpoints(spec);
-        if (!hasBeenVerified) {
-            throw new IllegalStateException();
+    public Despot<ParamType> verify(String path) {
+        try {
+            InputStream specStream = getClass().getResourceAsStream(path);
+            Map spec = (Map) new JSONParser().parse(new InputStreamReader(specStream));
+            boolean hasBeenVerified = verifyAllEndpoints(spec);
+            if (!hasBeenVerified) {
+                throw new IllegalStateException();
+            }
+            return this;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        return this;
     }
 
     public boolean verifyAllEndpoints(Map spec) {

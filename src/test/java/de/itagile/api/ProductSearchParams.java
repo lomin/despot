@@ -15,4 +15,9 @@ public class ProductSearchParams implements IProductSearchParams {
     public int getPage() {
         return 0;
     }
+
+    @Override
+    public String getProductId() {
+        return "testId123";
+    }
 }

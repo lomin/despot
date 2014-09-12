@@ -5,13 +5,21 @@ import de.itagile.despot.EntityFactory;
 import de.itagile.mediatype.MediaTypeTest;
 import de.itagile.mediatype.html.Viewable;
 import org.json.simple.JSONObject;
-import org.junit.Before;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 import java.util.Map;
 
+import static de.itagile.api.FullResponse.full_response;
+import static de.itagile.api.IsInvalidPage.is_invalid_page;
+import static de.itagile.api.IsInvalidUri.is_invalid_uri;
+import static de.itagile.api.IsManualRedirectPossible.is_manual_redirect_possible;
+import static de.itagile.api.IsPageNrOutOfRange.is_page_nr_out_of_range;
+import static de.itagile.api.IsPartialMenu.is_partial_menu;
+import static de.itagile.api.IsResultOk.is_result_ok;
 import static de.itagile.api.ManualRedirect.manual_redirect;
+import static de.itagile.api.RedirectToFirstPage.redirect_to_first_page;
+import static de.itagile.api.RedirectToFirstPageFull.redirect_to_first_page_full;
 import static de.itagile.api.SpecBuilder.*;
 import static de.itagile.despot.Despot.despot;
 import static de.itagile.despot.Despot.pre;
@@ -22,46 +30,43 @@ import static org.junit.Assert.assertFalse;
 
 public class ApiTest {
 
-    private
-    @SuppressWarnings("unchecked")
-    Despot<IProductSearchParams> despot;
 
-    @Before
-    public void setUp() throws Exception {
-        despot = despot("/items/{path}", Despot.Method.GET, IProductSearchParams.class).
-                next(
-                        IsInvalidPage.is_invalid_page(),
-                        RedirectToFirstPage.redirect_to_first_page(), 301).
-                next(
-                        and(IsInvalidUri.is_invalid_uri(), IsManualRedirectPossible.is_manual_redirect_possible()),
-                        manual_redirect(), 301).
-                next(
-                        pre(not(IsPartialMenu.is_partial_menu())).
-                                next(
-                                        IsPageNrOutOfRange.is_page_nr_out_of_range(),
-                                        RedirectToFirstPageFull.redirect_to_first_page_full(), 301).
-                                next(
-                                        IsResultOk.is_result_ok(),
-                                        FullResponse.full_response(), 200)).
-                last(RedirectToFirstPage.redirect_to_first_page(), 301).
-                error(RedirectException.class, 404)
-                .status(200, MediaTypeTest.PRODUCT_MEDIA_TYPE, new EntityFactory<JSONObject>() {
-                    @Override
-                    public JSONObject create() {
-                        return new JSONObject();
-                    }
-                })
-                .status(404, MediaTypeTest.HTML_MEDIA_TYPE, new EntityFactory<Viewable>() {
-                    @Override
-                    public Viewable create() {
-                        return new Viewable();
-                    }
-                });
-    }
+    @SuppressWarnings("unchecked")
+    private final static Despot<IProductSearchParams> PRODUCT_SEARCH_API =
+            despot("/items/{path}", Despot.Method.GET, IProductSearchParams.class).
+                    next(
+                            is_invalid_page(),
+                            redirect_to_first_page(), 301).
+                    next(
+                            and(is_invalid_uri(), is_manual_redirect_possible()),
+                            manual_redirect(), 301).
+                    next(
+                            pre(not(is_partial_menu())).
+                                    next(
+                                            is_page_nr_out_of_range(),
+                                            redirect_to_first_page_full(), 301).
+                                    next(
+                                            is_result_ok(),
+                                            full_response(), 200)).
+                    last(redirect_to_first_page(), 301).
+                    error(RedirectException.class, 404)
+                    .status(200, MediaTypeTest.PRODUCT_MEDIA_TYPE, new EntityFactory<JSONObject>() {
+                        @Override
+                        public JSONObject create() {
+                            return new JSONObject();
+                        }
+                    })
+                    .status(404, MediaTypeTest.HTML_MEDIA_TYPE, new EntityFactory<Viewable>() {
+                        @Override
+                        public Viewable create() {
+                            return new Viewable();
+                        }
+                    })
+                    .verify("/de.itagile.spec/spec.json");
 
     @Test
     public void responsesWith200AndProductMediaType() throws Exception {
-        Response response = despot.response(new ProductSearchParams());
+        Response response = PRODUCT_SEARCH_API.response(new ProductSearchParams());
 
         assertEquals(200, response.getStatus());
         assertEquals("tracking-value", response.getMetadata().getFirst("tracking-header"));
@@ -73,7 +78,7 @@ public class ApiTest {
 
     @Test
     public void fulfillsTheFullSpec() throws Exception {
-        assertEquals(despot, despot.verify("/de.itagile.spec/spec.json"));
+        assertEquals(PRODUCT_SEARCH_API, PRODUCT_SEARCH_API.verify("/de.itagile.spec/spec.json"));
     }
 
     @Test
@@ -85,7 +90,7 @@ public class ApiTest {
                                         .uri("/test"))
                         .build();
 
-        assertFalse(despot.verifyAllEndpoints(spec));
+        assertFalse(PRODUCT_SEARCH_API.verifyAllEndpoints(spec));
     }
 
     @Test
@@ -100,7 +105,7 @@ public class ApiTest {
                                                         .method(Despot.Method.POST)))
                         .build();
 
-        assertFalse(despot.verifyAllEndpoints(spec));
+        assertFalse(PRODUCT_SEARCH_API.verifyAllEndpoints(spec));
     }
 
     @Test
@@ -116,7 +121,7 @@ public class ApiTest {
                                                         .addStatusCode(201, "text/html")))
                         .build();
 
-        assertFalse(despot.verifyAllEndpoints(spec));
+        assertFalse(PRODUCT_SEARCH_API.verifyAllEndpoints(spec));
     }
 
     @Test
@@ -133,6 +138,6 @@ public class ApiTest {
                                                         .addStatusCode(301, "text/html")
                                                         .addStatusCode(404, "text/html")))
                         .build();
-        assertFalse(despot.verifyAllEndpoints(spec));
+        assertFalse(PRODUCT_SEARCH_API.verifyAllEndpoints(spec));
     }
 }
