@@ -3,7 +3,7 @@ package de.itagile.api;
 import de.itagile.specification.Specification;
 import de.itagile.specification.SpecificationPartial;
 
-public class IsInvalidUri<T extends IsInvalidUri.IIsInvalidUri> extends SpecificationPartial<T> {
+public class IsInvalidUri extends SpecificationPartial<IsInvalidUri.IIsInvalidUri> {
     private IsInvalidUri() {
     }
 

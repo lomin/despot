@@ -2,8 +2,10 @@ package de.itagile.api;
 
 import de.itagile.despot.Despot;
 import de.itagile.despot.EntityFactory;
+import de.itagile.despot.ResponsePartial;
 import de.itagile.mediatype.MediaTypeTest;
 import de.itagile.mediatype.html.Viewable;
+import de.itagile.specification.SpecificationPartial;
 import org.json.simple.JSONObject;
 import org.junit.Test;
 
@@ -30,15 +32,15 @@ import static org.junit.Assert.assertFalse;
 
 public class ApiTest {
 
-
-    @SuppressWarnings("unchecked")
+    private static SpecificationPartial<IProductSearchParams> x;
+    private static ResponsePartial<? super IProductSearchParams> y;
     private final static Despot<IProductSearchParams> PRODUCT_SEARCH_API =
             despot("/items/{path}", Despot.Method.GET, IProductSearchParams.class).
                     next(
                             is_invalid_page(),
                             redirect_to_first_page(), 301).
                     next(
-                            and(is_invalid_uri(), is_manual_redirect_possible()),
+                            and(is_invalid_uri(), is_manual_redirect_possible(), IProductSearchParams.class),
                             manual_redirect(), 301).
                     next(
                             pre(not(is_partial_menu())).

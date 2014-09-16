@@ -18,7 +18,7 @@ public abstract class SpecificationPartial<ParamType> implements Completable<Par
         };
     };
 
-    public static <ParamType> SpecificationPartial<ParamType> and(final SpecificationPartial<ParamType> first, final SpecificationPartial<ParamType> second) {
+    public static <ParamType> SpecificationPartial<? super ParamType> and(final SpecificationPartial<? super ParamType> first, final SpecificationPartial<? super ParamType> second, Class<ParamType> _) {
         return new SpecificationPartial<ParamType>() {
             @Override
             public Specification create(ParamType param) {

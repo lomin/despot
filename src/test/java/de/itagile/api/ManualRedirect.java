@@ -5,7 +5,7 @@ import de.itagile.despot.ResponsePartial;
 
 import javax.ws.rs.core.Response;
 
-public class ManualRedirect<T extends ManualRedirect.IManualRedirect> extends ResponsePartial<T> {
+public class ManualRedirect extends ResponsePartial<ManualRedirect.IManualRedirect> {
     private ManualRedirect() {
     }
 

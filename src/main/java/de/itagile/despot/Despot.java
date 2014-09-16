@@ -3,13 +3,11 @@ package de.itagile.despot;
 import de.itagile.mediatype.Format;
 import de.itagile.mediatype.MediaType;
 import de.itagile.model.Model;
-import de.itagile.specification.SpecificationPartial;
 import de.itagile.specification.Specification;
+import de.itagile.specification.SpecificationPartial;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 import javax.ws.rs.core.Response;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
@@ -29,13 +27,13 @@ public class Despot<ParamType> {
         }
     }
 
-    private Despot<ParamType> addOption(SpecificationPartial<ParamType> specification, ResponsePartial<ParamType> option, int status) {
+    private Despot<ParamType> addOption(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, int status) {
         this.elements.add(new DespotPartialElement(specification, option, status));
         this.allStatus.add(status);
         return this;
     }
 
-    public Despot<ParamType> next(SpecificationPartial<ParamType> specification, ResponsePartial<ParamType> option, int status) {
+    public Despot<ParamType> next(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, int status) {
         return addOption(specification, option, status);
     }
 
@@ -175,8 +173,8 @@ public class Despot<ParamType> {
             this.s = s;
         }
 
-        public PreDespot<ParamType> next(SpecificationPartial<ParamType> specification, ResponsePartial<ParamType> option, int status) {
-            super.next(SpecificationPartial.and(s, specification), option, status);
+        public PreDespot<ParamType> next(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, int status) {
+            super.next(SpecificationPartial.and(s, specification, null), option, status);
             return this;
         }
     }
@@ -198,11 +196,11 @@ public class Despot<ParamType> {
     }
 
     private class DespotPartialElement {
-        private final SpecificationPartial<ParamType> specification;
-        private final ResponsePartial<ParamType> response;
+        private final SpecificationPartial<? super ParamType> specification;
+        private final ResponsePartial<? super ParamType> response;
         private int status;
 
-        private DespotPartialElement(SpecificationPartial<ParamType> specification, ResponsePartial<ParamType> response, int status) {
+        private DespotPartialElement(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> response, int status) {
             this.specification = specification;
             this.response = response;
             this.status = status;

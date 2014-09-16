@@ -3,7 +3,7 @@ package de.itagile.api;
 import de.itagile.specification.Specification;
 import de.itagile.specification.SpecificationPartial;
 
-public class IsManualRedirectPossible<T extends IsManualRedirectPossible.IIsManualRedirectPossible> extends SpecificationPartial<T> {
+public class IsManualRedirectPossible extends SpecificationPartial<IsManualRedirectPossible.IIsManualRedirectPossible> {
     private IsManualRedirectPossible() {
     }
 

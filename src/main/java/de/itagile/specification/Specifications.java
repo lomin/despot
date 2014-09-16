@@ -1,6 +1,6 @@
 package de.itagile.specification;
 
-class Specifications {
+public class Specifications {
 
     private static final Specification TRUE = new Specification() {
         @Override

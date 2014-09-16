@@ -8,7 +8,7 @@ import de.itagile.model.Model;
 
 import javax.ws.rs.core.Response;
 
-public class FullResponse<T extends FullResponse.IFullResponseParams> extends ResponsePartial<T> {
+public class FullResponse extends ResponsePartial<FullResponse.IFullResponseParams> {
     private IFullResponseParams param;
 
     private FullResponse() {
@@ -24,7 +24,7 @@ public class FullResponse<T extends FullResponse.IFullResponseParams> extends Re
 
     @Override
     public DespotResponse create(IFullResponseParams param) {
-        return new FullResponse<>(param);
+        return new FullResponse(param);
     }
 
     @Override

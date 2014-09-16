@@ -3,7 +3,7 @@ package de.itagile.api;
 import de.itagile.specification.Specification;
 import de.itagile.specification.SpecificationPartial;
 
-public class IsInvalidPage <T extends IsInvalidPage.Pageable> extends SpecificationPartial<T> {
+public class IsInvalidPage extends SpecificationPartial<IsInvalidPage.Pageable> {
     private Pageable pageable;
 
     private IsInvalidPage() {
