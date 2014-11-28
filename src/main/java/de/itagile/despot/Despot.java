@@ -11,7 +11,7 @@ import java.util.*;
 
 public class Despot<ParamType> {
 
-    private final List<DespotPartialElement> elements = new ArrayList<>();
+    private final List<DespotRoute> routes = new ArrayList<>();
     private final Set<Map> specs = new HashSet<>();
     private String endpoint = "/";
     private Method method = Method.GET;
@@ -27,31 +27,31 @@ public class Despot<ParamType> {
         return new PreDespot<>(specification);
     }
 
-    private Despot<ParamType> addOption(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, List<ResponseModifier> modifiers) {
+    private Despot<ParamType> addRoute(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, List<ResponseModifier> modifiers) {
         Map spec = new HashMap();
-        spec.put("uri", endpoint);
-        spec.put("method", method.name());
+        spec.put(DespotSpecParser.URI, endpoint);
+        spec.put(DespotSpecParser.METHOD, method.name());
         for (ResponseModifier modifier : modifiers) {
             modifier.spec(spec);
         }
         specs.add(spec);
-        this.elements.add(new DespotPartialElement(specification, option, modifiers));
+        this.routes.add(new DespotRoute(specification, option, modifiers));
         return this;
     }
 
     public Despot<ParamType> next(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, ResponseModifier... responseModifiers) {
-        return addOption(specification, option, Arrays.asList(responseModifiers));
+        return addRoute(specification, option, Arrays.asList(responseModifiers));
     }
 
     public Despot<ParamType> next(Despot<ParamType> preDespot) {
-        for (DespotPartialElement element : preDespot.elements) {
-            addOption(element.specification, element.response, element.modifiers);
+        for (DespotRoute element : preDespot.routes) {
+            addRoute(element.specification, element.response, element.modifiers);
         }
         return this;
     }
 
     public Despot<ParamType> last(ResponsePartial<ParamType> option, ResponseModifier... responseModifiers) {
-        return addOption(new SpecificationPartial<ParamType>() {
+        return addRoute(new SpecificationPartial<ParamType>() {
             @Override
             public Specification create(ParamType param) {
                 return this;
@@ -69,7 +69,7 @@ public class Despot<ParamType> {
     }
 
     public Response response(ParamType param) {
-        for (DespotPartialElement element : elements) {
+        for (DespotRoute element : routes) {
             Specification specification = element.specification.create(param);
             if (specification.isTrue()) {
                 Response.ResponseBuilder responseBuilder = Response.noContent();
@@ -81,7 +81,7 @@ public class Despot<ParamType> {
                 return responseBuilder.build();
             }
         }
-        throw new IllegalStateException();
+        throw new IllegalStateException("No route matched and no fallback defined.");
     }
 
     public Despot<ParamType> verify(String path) {
@@ -99,51 +99,50 @@ public class Despot<ParamType> {
     }
 
     public boolean verifyAllEndpoints(Map spec) {
-        List endpoints = (List) spec.get("endpoints");
+        List endpoints = (List) spec.get(DespotSpecParser.ENDPOINTS);
         Set<Map> sCopy = new HashSet<>(specs);
+        Set<Map> jsonSpecs = new HashSet<Map>();
         for (Object element : endpoints) {
             Map endpoint = (Map) element;
-            if (this.endpoint.equals(endpoint.get("uri"))) {
-                return verifyAllMethods(endpoint, sCopy);
+            if (this.endpoint.equals(endpoint.get(DespotSpecParser.URI))) {
+                return verifyAllMethods(endpoint, sCopy, jsonSpecs);
             }
         }
         return false;
     }
 
-    private boolean verifyAllMethods(Map endpoint, Set<Map> sCopy) {
-        List methods = (List) endpoint.get("methods");
+    private boolean verifyAllMethods(Map endpoint, Set<Map> sCopy, Set<Map> specs) {
+        List methods = (List) endpoint.get(DespotSpecParser.METHODS);
         for (Object element : methods) {
             Map method = (Map) element;
-            if (this.method.name().equals(method.get("method"))) {
-                return verifyAllStatusCodes(method, sCopy);
+            if (this.method.name().equals(method.get(DespotSpecParser.METHOD))) {
+                return verifyAllStatusCodes(method, sCopy, specs);
             }
         }
         return false;
     }
 
-    private boolean verifyAllStatusCodes(Map method, Set<Map> sCopy) {
-        List allStatusCodes = (List) method.get("status_codes");
+    private boolean verifyAllStatusCodes(Map method, Set<Map> sCopy, Set<Map> jsonSpecs) {
+        List allStatusCodes = (List) method.get(DespotSpecParser.RESPONSES);
         for (Object element : allStatusCodes) {
             Map spec = new HashMap();
-            spec.put("uri", endpoint);
-            spec.put("method", this.method.name());
+            spec.put(DespotSpecParser.URI, endpoint);
+            spec.put(DespotSpecParser.METHOD, this.method.name());
             Map statusCodeMap = (Map) element;
-            String statusCodeString = statusCodeMap.get("status_code").toString();
+            String statusCodeString = statusCodeMap.get(DespotSpecParser.STATUS_CODE).toString();
             int statusCode = Integer.valueOf(statusCodeString);
-            spec.put("status_code", statusCode);
-            Object mediatype = statusCodeMap.get("mediatype");
-            if (mediatype != null) spec.put("mediatype", mediatype);
-            sCopy.remove(spec);
+            spec.put(DespotSpecParser.STATUS_CODE, statusCode);
+            Object mediatype = statusCodeMap.get(DespotSpecParser.MEDIATYPE);
+            if (mediatype != null) spec.put(DespotSpecParser.MEDIATYPE, mediatype);
+            jsonSpecs.add(spec);
         }
-        return sCopy.isEmpty();
+        sCopy.removeAll(jsonSpecs);
+        jsonSpecs.removeAll(this.specs);
+        return sCopy.isEmpty(); // && jsonSpecs.isEmpty();
     }
 
     public static enum Method {
         GET, POST, PUT, DELETE;
-    }
-
-    public static interface ResponseModifier2<T> extends ResponseModifier {
-        T get();
     }
 
     public static class PreDespot<ParamType> extends Despot<ParamType> {
@@ -160,12 +159,12 @@ public class Despot<ParamType> {
         }
     }
 
-    private class DespotPartialElement {
+    private class DespotRoute {
         private final SpecificationPartial<? super ParamType> specification;
         private final ResponsePartial<? super ParamType> response;
         private final List<ResponseModifier> modifiers;
 
-        private DespotPartialElement(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> response, List<ResponseModifier> modifiers) {
+        private DespotRoute(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> response, List<ResponseModifier> modifiers) {
             this.specification = specification;
             this.response = response;
             this.modifiers = modifiers;

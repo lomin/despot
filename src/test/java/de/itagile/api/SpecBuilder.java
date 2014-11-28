@@ -1,6 +1,7 @@
 package de.itagile.api;
 
 import de.itagile.despot.Despot;
+import de.itagile.despot.DespotSpecParser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,10 +25,10 @@ public class SpecBuilder extends Builder {
     }
 
     SpecBuilder addEndpoint(EndpointBuilder endpoint) {
-        if (!model.containsKey("endpoint")) {
-            model.put("endpoints", new ArrayList<>());
+        if (!model.containsKey(DespotSpecParser.ENDPOINTS)) {
+            model.put(DespotSpecParser.ENDPOINTS, new ArrayList<>());
         }
-        List endpoints = (List) model.get("endpoints");
+        List endpoints = (List) model.get(DespotSpecParser.ENDPOINTS);
         endpoints.add(endpoint.build());
         return this;
     }
@@ -38,15 +39,15 @@ public class SpecBuilder extends Builder {
         }
 
         EndpointBuilder uri(String uri) {
-            model.put("uri", uri);
+            model.put(DespotSpecParser.URI, uri);
             return this;
         }
 
         EndpointBuilder addMethod(MethodBuilder method) {
-            if (!model.containsKey("methods")) {
-                model.put("methods", new ArrayList<>());
+            if (!model.containsKey(DespotSpecParser.METHODS)) {
+                model.put(DespotSpecParser.METHODS, new ArrayList<>());
             }
-            List methods = (List) model.get("methods");
+            List methods = (List) model.get(DespotSpecParser.METHODS);
             methods.add(method.build());
             return this;
         }
@@ -56,19 +57,19 @@ public class SpecBuilder extends Builder {
 
         private MethodBuilder() {
             super();
-            model.put("status_codes", new ArrayList<>());
+            model.put(DespotSpecParser.RESPONSES, new ArrayList<>());
         }
 
         MethodBuilder method(Despot.Method method) {
-            model.put("method", method.name());
+            model.put(DespotSpecParser.METHOD, method.name());
             return this;
         }
 
         MethodBuilder addStatusCode(int code, String mediatype) {
-            List status_codes = (List) model.get("status_codes");
+            List status_codes = (List) model.get(DespotSpecParser.RESPONSES);
             HashMap statusCode = new HashMap();
-            statusCode.put("status_code", code);
-            statusCode.put("mediatype", mediatype);
+            statusCode.put(DespotSpecParser.STATUS_CODE, code);
+            statusCode.put(DespotSpecParser.MEDIATYPE, mediatype);
             status_codes.add(statusCode);
             return this;
         }

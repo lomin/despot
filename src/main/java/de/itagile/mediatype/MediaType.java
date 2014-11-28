@@ -1,6 +1,7 @@
 package de.itagile.mediatype;
 
 import de.itagile.despot.DespotResponse;
+import de.itagile.despot.DespotSpecParser;
 import de.itagile.despot.EntityFactory;
 import de.itagile.despot.ResponseModifier;
 import de.itagile.model.Model;
@@ -87,6 +88,6 @@ public class MediaType<T, FormatType extends Format<T>> implements Iterable<Form
 
     @Override
     public void spec(Map spec) {
-        spec.put("mediatype", name);
+        spec.put(DespotSpecParser.MEDIATYPE, name);
     }
 }

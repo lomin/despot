@@ -63,7 +63,7 @@ public class ApiTest {
         return new ResponseModifier() {
             @Override
             public void spec(Map spec) {
-                spec.put("status_code", status);
+                spec.put(DespotSpecParser.STATUS_CODE, status);
             }
 
             @Override
