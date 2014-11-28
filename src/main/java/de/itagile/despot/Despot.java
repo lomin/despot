@@ -19,26 +19,22 @@ public class Despot<ParamType> {
     private final Set<Integer> allStatus = new HashSet<>();
     private String endpoint = "/";
     private Method method = Method.GET;
-    private Map<Integer, MediaType<? extends Format<?>>> statusMediaType = new HashMap<>();
+    private Map<Integer, MediaType<?, ? extends Format<?>>> statusMediaType = new HashMap<>();
 
-    public static <T> void transform(Model source, T target, MediaType<? extends Format<T>> mediaType) {
-        for (Format<T> key : mediaType) {
-            key.transform(source, target);
-        }
-    }
-
-    private Despot<ParamType> addOption(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, int status) {
-        this.elements.add(new DespotPartialElement(specification, option, status));
+    private Despot<ParamType> addOption(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, int status, List<ResponseModifier> modifiers) {
+        this.elements.add(new DespotPartialElement(specification, option, status, modifiers));
         this.allStatus.add(status);
         return this;
     }
 
-    public static interface ResponseModifier<T> {
+    public static interface ResponseModifier2<T> extends ResponseModifier {
         T get();
     }
 
-    public Despot<ParamType> next(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, ResponseModifier<Integer> modifier) {
-        return addOption(specification, option, modifier.get());
+    public Despot<ParamType> next(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, ResponseModifier2<Integer> modifier) {
+        List<ResponseModifier> modifiers = new ArrayList<>();
+        modifiers.add(modifier);
+        return addOption(specification, option, modifier.get(), modifiers);
     }
 
     public Despot<ParamType> next(Despot<ParamType> preDespot) {
@@ -49,7 +45,9 @@ public class Despot<ParamType> {
         return this;
     }
 
-    public Despot<ParamType> last(ResponsePartial<ParamType> option, ResponseModifier<Integer> modifier) {
+    public Despot<ParamType> last(ResponsePartial<ParamType> option, ResponseModifier2<Integer> modifier) {
+        List<ResponseModifier> modifiers = new ArrayList<>();
+        modifiers.add(modifier);
         return addOption(new SpecificationPartial<ParamType>() {
             @Override
             public Specification create(ParamType param) {
@@ -60,7 +58,7 @@ public class Despot<ParamType> {
             public boolean isTrue() {
                 return true;
             }
-        }, option, modifier.get());
+        }, option, modifier.get(), modifiers);
     }
 
     public static <T> Despot<T> despot(String url, Method method, Class<T> _) {
@@ -80,7 +78,7 @@ public class Despot<ParamType> {
     }
 
     public <T> Despot<ParamType>
-    status(int status, final MediaType<? extends Format<T>> mediaType, final EntityFactory<T> entityFactory) {
+    status(int status, final MediaType<T, ? extends Format<T>> mediaType, final EntityFactory<T> entityFactory) {
         if (!allStatus.contains(status)) {
             throw new RuntimeException("Not a declared status code: " + status);
         }
@@ -94,14 +92,14 @@ public class Despot<ParamType> {
             Specification specification = element.specification.create(param);
             if (specification.isTrue()) {
                 int status = element.status;
+                Response.ResponseBuilder responseBuilder = Response.noContent();
+                for(ResponseModifier modifier : element.modifiers) {
+                    modifier.modify(responseBuilder);
+                }
                 DespotResponse response = element.response.create(param);
                 Model model = response.responseModel();
-                EntityBuilder entityBuilder = entityBuilders.get(status);
-                Object entity = null;
-                if (entityBuilder != null) {
-                    entity = entityBuilder.transform(model);
-                }
-                Response.ResponseBuilder responseBuilder = Response.status(status).entity(entity);
+                Object entity = statusMediaType.get(status).transform(model);
+                responseBuilder.entity(entity);
                 response.modify(responseBuilder);
                 return responseBuilder.build();
             }
@@ -177,7 +175,7 @@ public class Despot<ParamType> {
             this.s = s;
         }
 
-        public PreDespot<ParamType> next(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, ResponseModifier<Integer> status) {
+        public PreDespot<ParamType> next(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, ResponseModifier2<Integer> status) {
             super.next(SpecificationPartial.and(s, specification, null), option, status);
             return this;
         }
@@ -185,17 +183,11 @@ public class Despot<ParamType> {
 
     private static class EntityBuilder<T> {
         private final EntityFactory<T> entityFactory;
-        private final MediaType<? extends Format<T>> mediaType;
+        private final MediaType<T, ? extends Format<T>> mediaType;
 
-        private EntityBuilder(EntityFactory<T> entityFactory, MediaType<? extends Format<T>> mediaType) {
+        private EntityBuilder(EntityFactory<T> entityFactory, MediaType<T, ? extends Format<T>> mediaType) {
             this.entityFactory = entityFactory;
             this.mediaType = mediaType;
-        }
-
-        private T transform(Model source) {
-            T entity = entityFactory.create();
-            Despot.transform(source, entity, mediaType);
-            return entity;
         }
     }
 
@@ -203,11 +195,13 @@ public class Despot<ParamType> {
         private final SpecificationPartial<? super ParamType> specification;
         private final ResponsePartial<? super ParamType> response;
         private int status;
+        private final List<ResponseModifier> modifiers;
 
-        private DespotPartialElement(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> response, int status) {
+        private DespotPartialElement(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> response, int status, List<ResponseModifier> modifiers) {
             this.specification = specification;
             this.response = response;
             this.status = status;
+            this.modifiers = modifiers;
         }
     }
 

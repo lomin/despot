@@ -3,6 +3,7 @@ package de.itagile.api;
 import de.itagile.despot.Despot;
 import de.itagile.despot.EntityFactory;
 import de.itagile.despot.ResponsePartial;
+import de.itagile.mediatype.JSONObjectEntityFactory;
 import de.itagile.mediatype.MediaTypeTest;
 import de.itagile.mediatype.html.Viewable;
 import de.itagile.specification.SpecificationPartial;
@@ -52,12 +53,7 @@ public class ApiTest {
                                             full_response(), status(200))).
                     last(redirect_to_first_page(), status(301)).
                     error(RedirectException.class, 404)
-                    .status(200, MediaTypeTest.PRODUCT_MEDIA_TYPE, new EntityFactory<JSONObject>() {
-                        @Override
-                        public JSONObject create() {
-                            return new JSONObject();
-                        }
-                    })
+                    .status(200, MediaTypeTest.PRODUCT_MEDIA_TYPE, __HANS__())
                     .status(404, MediaTypeTest.HTML_MEDIA_TYPE, new EntityFactory<Viewable>() {
                         @Override
                         public Viewable create() {
@@ -66,8 +62,18 @@ public class ApiTest {
                     })
                     .verify("/de.itagile.spec/spec.json");
 
-    private static Despot.ResponseModifier<Integer> status(final int status) {
-        return new Despot.ResponseModifier<Integer>(){
+    private static EntityFactory<JSONObject> __HANS__() {
+        EntityFactory<JSONObject> entityFactory = new JSONObjectEntityFactory();
+        return entityFactory;
+    }
+
+    private static Despot.ResponseModifier2<Integer> status(final int status) {
+        return new Despot.ResponseModifier2<Integer>(){
+            @Override
+            public void modify(Response.ResponseBuilder responseBuilder) {
+                responseBuilder.status(status);
+            }
+
             @Override
             public Integer get() {
                 return status;
@@ -151,4 +157,5 @@ public class ApiTest {
                         .build();
         assertFalse(PRODUCT_SEARCH_API.verifyAllEndpoints(spec));
     }
+
 }

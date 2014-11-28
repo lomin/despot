@@ -1,106 +1,108 @@
 {
-    "endpoints": [{
-        "uri": "/items/{path}",
-        "methods": [
+  "endpoints": [
+    {
+      "uri": "/items/{path}",
+      "methods": [
+        {
+          "method": "GET",
+          "status_codes": [
             {
-                "method": "GET",
-                "status_codes": [
-                    {
-                        "status_code": 200,
-                        "mediatype": "application/vnd.itagile.product+json"
-                    },
-                    {
-                        "status_code": 301
-                    },
-                    {
-                        "status_code": 404,
-                        "mediatype": "application/vnd.itagile.product+html"
-                    }
-                ]
+              "status_code": 200,
+              "mediatype": "application/vnd.itagile.product+json"
+            },
+            {
+              "status_code": 301
+            },
+            {
+              "status_code": 404,
+              "mediatype": "application/vnd.itagile.product+html"
             }
-        ]
-    }],
-    "media_types": [
-        {
-            "name": "application/vnd.itagile.product+json",
-            "fields": [
-                "productId",
-                "name",
-                "variations"
-            ]
-        },
-        {
-            "name": "application/vnd.itagile.variation+json",
-            "fields": [
-                "variationId",
-                "availability",
-                "price"
-            ]
-        },
-        {
-            "name": "application/vnd.itagile.product+html",
-            "fields": ["reason"]
+          ]
         }
-    ],
-    "fields": [
-        {
-            "name": "reason",
-            "type": {
-                "name": "String"
-            }
-        },
-        {
-            "name": "link",
-            "type": {
-                "name": "RELATIVE_URI"
-            }
-        },
-        {
-            "name": "productId",
-            "type": {
-                "name": "String",
-                "required": true
-            }
-        },
-        {
-            "name": "name",
-            "type": {
-                "name": "String"
-            }
-        },
-        {
-            "name": "variationId",
-            "type": {
-                "name": "String",
-                "required": true
-            }
-        },
-        {
-            "name": "availability",
-            "type": {
-                "name": "Enum",
-                "subtype": "String",
-                "values": [
-                    "AVAILABLE",
-                    "DELAYED",
-                    "SOLDOUT"
-                ],
-                "default": "AVAILABLE"
-            }
-        },
-        {
-            "name": "price",
-            "type": {
-                "name": "Integer"
-            }
-        },
-        {
-            "name": "variations",
-            "type": {
-                "name": "Set",
-                "subtype": "Object",
-                "mediatype": "application/vnd.itagile.variation+json"
-            }
-        }
-    ]
+      ]
+    }
+  ],
+  "media_types": [
+    {
+      "name": "application/vnd.itagile.product+json",
+      "fields": [
+        "productId",
+        "name",
+        "variations"
+      ]
+    },
+    {
+      "name": "application/vnd.itagile.variation+json",
+      "fields": [
+        "variationId",
+        "availability",
+        "price"
+      ]
+    },
+    {
+      "name": "application/vnd.itagile.product+html",
+      "fields": ["reason"]
+    }
+  ],
+  "fields": [
+    {
+      "name": "reason",
+      "type": {
+        "name": "String"
+      }
+    },
+    {
+      "name": "link",
+      "type": {
+        "name": "RELATIVE_URI"
+      }
+    },
+    {
+      "name": "productId",
+      "type": {
+        "name": "String",
+        "required": true
+      }
+    },
+    {
+      "name": "name",
+      "type": {
+        "name": "String"
+      }
+    },
+    {
+      "name": "variationId",
+      "type": {
+        "name": "String",
+        "required": true
+      }
+    },
+    {
+      "name": "availability",
+      "type": {
+        "name": "Enum",
+        "subtype": "String",
+        "values": [
+          "AVAILABLE",
+          "DELAYED",
+          "SOLDOUT"
+        ],
+        "default": "AVAILABLE"
+      }
+    },
+    {
+      "name": "price",
+      "type": {
+        "name": "Integer"
+      }
+    },
+    {
+      "name": "variations",
+      "type": {
+        "name": "Set",
+        "subtype": "Object",
+        "mediatype": "application/vnd.itagile.variation+json"
+      }
+    }
+  ]
 }

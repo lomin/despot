@@ -2,11 +2,7 @@ package de.itagile.despot;
 
 import de.itagile.model.Model;
 
-import javax.ws.rs.core.Response;
-
-public interface DespotResponse {
-
-    void modify(Response.ResponseBuilder responseBuilder);
+public interface DespotResponse extends ResponseModifier {
 
     Model responseModel();
 }

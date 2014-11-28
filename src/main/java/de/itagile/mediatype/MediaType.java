@@ -1,15 +1,28 @@
 package de.itagile.mediatype;
 
+import de.itagile.despot.EntityFactory;
+import de.itagile.model.Model;
+
 import java.util.*;
 
-public class MediaType<FormatType extends Format<?>> implements Iterable<FormatType> {
+public class MediaType<T, FormatType extends Format<T>> implements Iterable<FormatType>, EntityFactory<T> {
 
     private final Set<FormatType> mediaTypes = new HashSet<>();
     private final String name;
+    private final EntityFactory<T> entityFactory;
 
-    public MediaType(String name, FormatType... types) {
+    public MediaType(String name, EntityFactory<T> entityFactory, FormatType... types) {
         this.name = name;
+        this.entityFactory = entityFactory;
         mediaTypes.addAll(Arrays.asList(types));
+    }
+
+    public T transform(Model source) {
+        T target = this.create();
+        for (Format<T> key : this) {
+            key.transform(source, target);
+        }
+        return target;
     }
 
     public Iterator<FormatType> iterator() {
@@ -42,7 +55,7 @@ public class MediaType<FormatType extends Format<?>> implements Iterable<FormatT
         spec.put("name", this.name);
         Set fields = new HashSet();
         spec.put("fields", fields);
-        for(FormatType format: mediaTypes) {
+        for (FormatType format : mediaTypes) {
             Map subSpec = new HashMap();
             format.spec(subSpec);
             fields.add(subSpec);
@@ -55,5 +68,10 @@ public class MediaType<FormatType extends Format<?>> implements Iterable<FormatT
         return "MediaType{" +
                 "name='" + name + '\'' +
                 '}';
+    }
+
+    @Override
+    public T create() {
+        return entityFactory.create();
     }
 }
