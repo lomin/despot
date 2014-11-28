@@ -1,11 +1,14 @@
 package de.itagile.mediatype;
 
+import de.itagile.despot.DespotResponse;
 import de.itagile.despot.EntityFactory;
+import de.itagile.despot.ResponseModifier;
 import de.itagile.model.Model;
 
+import javax.ws.rs.core.Response;
 import java.util.*;
 
-public class MediaType<T, FormatType extends Format<T>> implements Iterable<FormatType>, EntityFactory<T> {
+public class MediaType<T, FormatType extends Format<T>> implements Iterable<FormatType>, EntityFactory<T>, ResponseModifier {
 
     private final Set<FormatType> mediaTypes = new HashSet<>();
     private final String name;
@@ -73,5 +76,12 @@ public class MediaType<T, FormatType extends Format<T>> implements Iterable<Form
     @Override
     public T create() {
         return entityFactory.create();
+    }
+
+    @Override
+    public DespotResponse modify(Response.ResponseBuilder responseBuilder, DespotResponse despotResponse) {
+        T entity = transform(despotResponse.responseModel());
+        responseBuilder.entity(entity);
+        return despotResponse;
     }
 }

@@ -31,9 +31,12 @@ public class Despot<ParamType> {
         T get();
     }
 
-    public Despot<ParamType> next(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, ResponseModifier2<Integer> modifier) {
+    public Despot<ParamType> next(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, ResponseModifier2<Integer> modifier, ResponseModifier... responseModifiers) {
         List<ResponseModifier> modifiers = new ArrayList<>();
         modifiers.add(modifier);
+        for (ResponseModifier r : responseModifiers) {
+            modifiers.add(r);
+        }
         return addOption(specification, option, modifier.get(), modifiers);
     }
 
@@ -45,9 +48,12 @@ public class Despot<ParamType> {
         return this;
     }
 
-    public Despot<ParamType> last(ResponsePartial<ParamType> option, ResponseModifier2<Integer> modifier) {
+    public Despot<ParamType> last(ResponsePartial<ParamType> option, ResponseModifier2<Integer> modifier, ResponseModifier... responseModifiers) {
         List<ResponseModifier> modifiers = new ArrayList<>();
         modifiers.add(modifier);
+        for (ResponseModifier r : responseModifiers) {
+            modifiers.add(r);
+        }
         return addOption(new SpecificationPartial<ParamType>() {
             @Override
             public Specification create(ParamType param) {
@@ -72,7 +78,7 @@ public class Despot<ParamType> {
         return new PreDespot<>(specification);
     }
 
-    public Despot<ParamType> error(Class<? extends Exception> exception, int status) {
+    public Despot<ParamType> error(Class<? extends Exception> exception, int status, ResponseModifier... responseModifiers) {
         this.allStatus.add(status);
         return this;
     }
@@ -91,16 +97,12 @@ public class Despot<ParamType> {
         for (DespotPartialElement element : elements) {
             Specification specification = element.specification.create(param);
             if (specification.isTrue()) {
-                int status = element.status;
                 Response.ResponseBuilder responseBuilder = Response.noContent();
-                for(ResponseModifier modifier : element.modifiers) {
-                    modifier.modify(responseBuilder);
-                }
                 DespotResponse response = element.response.create(param);
-                Model model = response.responseModel();
-                Object entity = statusMediaType.get(status).transform(model);
-                responseBuilder.entity(entity);
-                response.modify(responseBuilder);
+                response = response.modify(responseBuilder, response);
+                for(ResponseModifier modifier : element.modifiers) {
+                    response = modifier.modify(responseBuilder, response);
+                }
                 return responseBuilder.build();
             }
         }
@@ -175,8 +177,8 @@ public class Despot<ParamType> {
             this.s = s;
         }
 
-        public PreDespot<ParamType> next(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, ResponseModifier2<Integer> status) {
-            super.next(SpecificationPartial.and(s, specification, null), option, status);
+        public PreDespot<ParamType> next(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, ResponseModifier2<Integer> status, ResponseModifier... responseModifiers) {
+            super.next(SpecificationPartial.and(s, specification, null), option, status, responseModifiers);
             return this;
         }
     }

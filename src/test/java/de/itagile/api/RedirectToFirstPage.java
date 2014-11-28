@@ -20,7 +20,8 @@ public class RedirectToFirstPage extends ResponsePartial<IProductSearchParams> {
     }
 
     @Override
-    public void modify(Response.ResponseBuilder response) {
+    public DespotResponse modify(Response.ResponseBuilder response, DespotResponse despotResponse) {
         response.header("redirect-header", "redirect-value");
+        return despotResponse;
     }
 }

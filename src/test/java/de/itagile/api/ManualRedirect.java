@@ -18,10 +18,6 @@ public class ManualRedirect extends ResponsePartial<ManualRedirect.IManualRedire
         return manual_redirect();
     }
 
-    @Override
-    public void modify(Response.ResponseBuilder responseBuilder) {
-    }
-
     public static interface IManualRedirect {
 
     }

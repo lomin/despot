@@ -1,6 +1,7 @@
 package de.itagile.api;
 
 import de.itagile.despot.Despot;
+import de.itagile.despot.DespotResponse;
 import de.itagile.despot.EntityFactory;
 import de.itagile.despot.ResponsePartial;
 import de.itagile.mediatype.JSONObjectEntityFactory;
@@ -50,9 +51,9 @@ public class ApiTest {
                                             redirect_to_first_page_full(), status(301)).
                                     next(
                                             is_result_ok(),
-                                            full_response(), status(200))).
+                                            full_response(), status(200), MediaTypeTest.PRODUCT_MEDIA_TYPE)).
                     last(redirect_to_first_page(), status(301)).
-                    error(RedirectException.class, 404)
+                    error(RedirectException.class, 404, MediaTypeTest.HTML_MEDIA_TYPE)
                     .status(200, MediaTypeTest.PRODUCT_MEDIA_TYPE, __HANS__())
                     .status(404, MediaTypeTest.HTML_MEDIA_TYPE, new EntityFactory<Viewable>() {
                         @Override
@@ -70,8 +71,9 @@ public class ApiTest {
     private static Despot.ResponseModifier2<Integer> status(final int status) {
         return new Despot.ResponseModifier2<Integer>(){
             @Override
-            public void modify(Response.ResponseBuilder responseBuilder) {
+            public DespotResponse modify(Response.ResponseBuilder responseBuilder, DespotResponse despotResponse) {
                 responseBuilder.status(status);
+                return despotResponse;
             }
 
             @Override

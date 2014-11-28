@@ -28,8 +28,9 @@ public class FullResponse extends ResponsePartial<FullResponse.IFullResponsePara
     }
 
     @Override
-    public void modify(Response.ResponseBuilder responseBuilder) {
+    public DespotResponse modify(Response.ResponseBuilder responseBuilder, DespotResponse despotResponse) {
         responseBuilder.header("tracking-header", "tracking-value");
+        return despotResponse;
     }
 
     @Override

@@ -17,8 +17,4 @@ public class RedirectToFirstPageFull extends ResponsePartial<IProductSearchParam
     public DespotResponse create(IProductSearchParams param) {
         return redirect_to_first_page_full();
     }
-
-    @Override
-    public void modify(Response.ResponseBuilder responseBuilder) {
-    }
 }
