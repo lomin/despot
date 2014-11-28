@@ -38,19 +38,19 @@ public class ApiTest {
             despot("/items/{path}", Despot.Method.GET, IProductSearchParams.class).
                     next(
                             is_invalid_page(),
-                            redirect_to_first_page(), 301).
+                            redirect_to_first_page(), status(301)).
                     next(
                             and(is_invalid_uri(), is_manual_redirect_possible(), IProductSearchParams.class),
-                            manual_redirect(), 301).
+                            manual_redirect(), status(301)).
                     next(
                             pre(not(is_partial_menu())).
                                     next(
                                             is_page_nr_out_of_range(),
-                                            redirect_to_first_page_full(), 301).
+                                            redirect_to_first_page_full(), status(301)).
                                     next(
                                             is_result_ok(),
-                                            full_response(), 200)).
-                    last(redirect_to_first_page(), 301).
+                                            full_response(), status(200))).
+                    last(redirect_to_first_page(), status(301)).
                     error(RedirectException.class, 404)
                     .status(200, MediaTypeTest.PRODUCT_MEDIA_TYPE, new EntityFactory<JSONObject>() {
                         @Override
@@ -65,6 +65,15 @@ public class ApiTest {
                         }
                     })
                     .verify("/de.itagile.spec/spec.json");
+
+    private static Despot.ResponseModifier<Integer> status(final int status) {
+        return new Despot.ResponseModifier<Integer>(){
+            @Override
+            public Integer get() {
+                return status;
+            }
+        };
+    }
 
     @Test
     public void responsesWith200AndProductMediaType() throws Exception {
