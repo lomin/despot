@@ -6,12 +6,14 @@ import de.itagile.despot.EntityFactory;
 import de.itagile.despot.ResponsePartial;
 import de.itagile.mediatype.JSONObjectEntityFactory;
 import de.itagile.mediatype.MediaTypeTest;
-import de.itagile.mediatype.html.Viewable;
 import de.itagile.specification.SpecificationPartial;
 import org.json.simple.JSONObject;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static de.itagile.api.FullResponse.full_response;
@@ -29,13 +31,10 @@ import static de.itagile.despot.Despot.despot;
 import static de.itagile.despot.Despot.pre;
 import static de.itagile.specification.SpecificationPartial.and;
 import static de.itagile.specification.SpecificationPartial.not;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.*;
 
 public class ApiTest {
 
-    private static SpecificationPartial<IProductSearchParams> x;
-    private static ResponsePartial<? super IProductSearchParams> y;
     private final static Despot<IProductSearchParams> PRODUCT_SEARCH_API =
             despot("/items/{path}", Despot.Method.GET, IProductSearchParams.class).
                     next(
@@ -53,15 +52,10 @@ public class ApiTest {
                                             is_result_ok(),
                                             full_response(), status(200), MediaTypeTest.PRODUCT_MEDIA_TYPE)).
                     last(redirect_to_first_page(), status(301)).
-                    error(RedirectException.class, 404, MediaTypeTest.HTML_MEDIA_TYPE)
-                    .status(200, MediaTypeTest.PRODUCT_MEDIA_TYPE, __HANS__())
-                    .status(404, MediaTypeTest.HTML_MEDIA_TYPE, new EntityFactory<Viewable>() {
-                        @Override
-                        public Viewable create() {
-                            return new Viewable();
-                        }
-                    })
+                    error(RedirectException.class, MediaTypeTest.HTML_MEDIA_TYPE)
                     .verify("/de.itagile.spec/spec.json");
+    private static SpecificationPartial<IProductSearchParams> x;
+    private static ResponsePartial<? super IProductSearchParams> y;
 
     private static EntityFactory<JSONObject> __HANS__() {
         EntityFactory<JSONObject> entityFactory = new JSONObjectEntityFactory();
@@ -69,7 +63,12 @@ public class ApiTest {
     }
 
     private static Despot.ResponseModifier2<Integer> status(final int status) {
-        return new Despot.ResponseModifier2<Integer>(){
+        return new Despot.ResponseModifier2<Integer>() {
+            @Override
+            public void spec(Map spec) {
+                spec.put("status_code", status);
+            }
+
             @Override
             public DespotResponse modify(Response.ResponseBuilder responseBuilder, DespotResponse despotResponse) {
                 responseBuilder.status(status);
@@ -79,6 +78,11 @@ public class ApiTest {
             @Override
             public Integer get() {
                 return status;
+            }
+
+            @Override
+            public String toString() {
+                return "Status: " + status;
             }
         };
     }
@@ -160,4 +164,19 @@ public class ApiTest {
         assertFalse(PRODUCT_SEARCH_API.verifyAllEndpoints(spec));
     }
 
+    @Test
+    public void testName() throws Exception {
+        List<Map> l = new ArrayList<>();
+        Map m1 = new HashMap<>();
+        m1.put("hans", 1);
+        l.add(m1);
+
+        Map m2 = new HashMap<>();
+        m2.put("hans", 1);
+
+        l.remove(m2);
+
+        assertEquals(m1, m2);
+        assertTrue(l.isEmpty());
+    }
 }

@@ -1,12 +1,10 @@
 package de.itagile.mediatype;
 
+import de.itagile.despot.Specified;
 import de.itagile.model.Model;
 
-import java.util.Map;
-
-public interface Format<T> {
+public interface Format<T> extends Specified {
 
     void transform(Model source, T target);
-    void spec(Map spec);
 
 }

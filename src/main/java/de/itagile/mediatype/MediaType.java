@@ -84,4 +84,9 @@ public class MediaType<T, FormatType extends Format<T>> implements Iterable<Form
         responseBuilder.entity(entity);
         return despotResponse;
     }
+
+    @Override
+    public void spec(Map spec) {
+        spec.put("mediatype", name);
+    }
 }

@@ -4,6 +4,7 @@ import de.itagile.model.Model;
 import de.itagile.model.HashModel;
 
 import javax.ws.rs.core.Response;
+import java.util.Map;
 
 public abstract class ResponsePartial<ParamType> implements Completable<ParamType, DespotResponse>, DespotResponse {
 
@@ -15,5 +16,10 @@ public abstract class ResponsePartial<ParamType> implements Completable<ParamTyp
     @Override
     public DespotResponse modify(Response.ResponseBuilder responseBuilder, DespotResponse despotResponse) {
         return despotResponse;
+    }
+
+    @Override
+    public void spec(Map spec) {
+
     }
 }

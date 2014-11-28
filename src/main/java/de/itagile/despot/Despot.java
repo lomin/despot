@@ -1,8 +1,5 @@
 package de.itagile.despot;
 
-import de.itagile.mediatype.Format;
-import de.itagile.mediatype.MediaType;
-import de.itagile.model.Model;
 import de.itagile.specification.Specification;
 import de.itagile.specification.SpecificationPartial;
 import org.json.simple.parser.JSONParser;
@@ -15,20 +12,31 @@ import java.util.*;
 public class Despot<ParamType> {
 
     private final List<DespotPartialElement> elements = new ArrayList<>();
-    private final Map<Integer, EntityBuilder> entityBuilders = new HashMap<>();
-    private final Set<Integer> allStatus = new HashSet<>();
+    private final Set<Map> specs = new HashSet<>();
     private String endpoint = "/";
     private Method method = Method.GET;
-    private Map<Integer, MediaType<?, ? extends Format<?>>> statusMediaType = new HashMap<>();
 
-    private Despot<ParamType> addOption(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, int status, List<ResponseModifier> modifiers) {
-        this.elements.add(new DespotPartialElement(specification, option, status, modifiers));
-        this.allStatus.add(status);
-        return this;
+    public static <T> Despot<T> despot(String uri, Method method, Class<T> _) {
+        Despot<T> despot = new Despot<>();
+        despot.endpoint = uri;
+        despot.method = method;
+        return despot;
     }
 
-    public static interface ResponseModifier2<T> extends ResponseModifier {
-        T get();
+    public static <ParamType> PreDespot<ParamType> pre(SpecificationPartial<ParamType> specification) {
+        return new PreDespot<>(specification);
+    }
+
+    private Despot<ParamType> addOption(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, List<ResponseModifier> modifiers) {
+        Map spec = new HashMap();
+        spec.put("uri", endpoint);
+        spec.put("method", method.name());
+        for (ResponseModifier modifier : modifiers) {
+            modifier.spec(spec);
+        }
+        specs.add(spec);
+        this.elements.add(new DespotPartialElement(specification, option, modifiers));
+        return this;
     }
 
     public Despot<ParamType> next(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, ResponseModifier2<Integer> modifier, ResponseModifier... responseModifiers) {
@@ -37,13 +45,12 @@ public class Despot<ParamType> {
         for (ResponseModifier r : responseModifiers) {
             modifiers.add(r);
         }
-        return addOption(specification, option, modifier.get(), modifiers);
+        return addOption(specification, option, modifiers);
     }
 
     public Despot<ParamType> next(Despot<ParamType> preDespot) {
         for (DespotPartialElement element : preDespot.elements) {
-            elements.add(element);
-            this.allStatus.add(element.status);
+            addOption(element.specification, element.response, element.modifiers);
         }
         return this;
     }
@@ -64,32 +71,10 @@ public class Despot<ParamType> {
             public boolean isTrue() {
                 return true;
             }
-        }, option, modifier.get(), modifiers);
+        }, option, modifiers);
     }
 
-    public static <T> Despot<T> despot(String url, Method method, Class<T> _) {
-        Despot<T> despot = new Despot<>();
-        despot.endpoint = url;
-        despot.method = method;
-        return despot;
-    }
-
-    public static <ParamType> PreDespot<ParamType> pre(SpecificationPartial<ParamType> specification) {
-        return new PreDespot<>(specification);
-    }
-
-    public Despot<ParamType> error(Class<? extends Exception> exception, int status, ResponseModifier... responseModifiers) {
-        this.allStatus.add(status);
-        return this;
-    }
-
-    public <T> Despot<ParamType>
-    status(int status, final MediaType<T, ? extends Format<T>> mediaType, final EntityFactory<T> entityFactory) {
-        if (!allStatus.contains(status)) {
-            throw new RuntimeException("Not a declared status code: " + status);
-        }
-        statusMediaType.put(status, mediaType);
-        entityBuilders.put(status, new EntityBuilder<>(entityFactory, mediaType));
+    public Despot<ParamType> error(Class<? extends Exception> exception, ResponseModifier... responseModifiers) {
         return this;
     }
 
@@ -100,7 +85,7 @@ public class Despot<ParamType> {
                 Response.ResponseBuilder responseBuilder = Response.noContent();
                 DespotResponse response = element.response.create(param);
                 response = response.modify(responseBuilder, response);
-                for(ResponseModifier modifier : element.modifiers) {
+                for (ResponseModifier modifier : element.modifiers) {
                     response = modifier.modify(responseBuilder, response);
                 }
                 return responseBuilder.build();
@@ -125,48 +110,50 @@ public class Despot<ParamType> {
 
     public boolean verifyAllEndpoints(Map spec) {
         List endpoints = (List) spec.get("endpoints");
+        Set<Map> sCopy = new HashSet<>(specs);
         for (Object element : endpoints) {
             Map endpoint = (Map) element;
             if (this.endpoint.equals(endpoint.get("uri"))) {
-                return verifyAllMethods(endpoint);
+                return verifyAllMethods(endpoint, sCopy);
             }
         }
         return false;
     }
 
-    private boolean verifyAllMethods(Map endpoint) {
+    private boolean verifyAllMethods(Map endpoint, Set<Map> sCopy) {
         List methods = (List) endpoint.get("methods");
         for (Object element : methods) {
             Map method = (Map) element;
             if (this.method.name().equals(method.get("method"))) {
-                return verifyAllStatusCodes(method);
+                return verifyAllStatusCodes(method, sCopy);
             }
         }
         return false;
     }
 
-    private boolean verifyAllStatusCodes(Map method) {
+    private boolean verifyAllStatusCodes(Map method, Set<Map> sCopy) {
         List allStatusCodes = (List) method.get("status_codes");
-        Set<Integer> allowedStatusCodes = new HashSet<>();
         for (Object element : allStatusCodes) {
+            Map spec = new HashMap();
+            spec.put("uri", endpoint);
+            spec.put("method", this.method.name());
             Map statusCodeMap = (Map) element;
             String statusCodeString = statusCodeMap.get("status_code").toString();
-            Integer statusCode = Integer.valueOf(statusCodeString);
-            MediaType mediaType = statusMediaType.get(statusCode);
-            if (mediaTypeNamesDiffer(statusCodeMap, mediaType) && !isRedirection(statusCode)) {
-                return false;
-            }
-            allowedStatusCodes.add(statusCode);
+            int statusCode = Integer.valueOf(statusCodeString);
+            spec.put("status_code", statusCode);
+            Object mediatype = statusCodeMap.get("mediatype");
+            if (mediatype != null) spec.put("mediatype", mediatype);
+            sCopy.remove(spec);
         }
-        return this.allStatus.equals(allowedStatusCodes);
+        return sCopy.isEmpty();
     }
 
-    private boolean mediaTypeNamesDiffer(Map statusCode, MediaType mediaType) {
-        return mediaType == null || !mediaType.getName().equals(statusCode.get("mediatype"));
+    public static enum Method {
+        GET, POST, PUT, DELETE;
     }
 
-    private boolean isRedirection(Integer status) {
-        return status >= 300 && status < 400;
+    public static interface ResponseModifier2<T> extends ResponseModifier {
+        T get();
     }
 
     public static class PreDespot<ParamType> extends Despot<ParamType> {
@@ -183,31 +170,15 @@ public class Despot<ParamType> {
         }
     }
 
-    private static class EntityBuilder<T> {
-        private final EntityFactory<T> entityFactory;
-        private final MediaType<T, ? extends Format<T>> mediaType;
-
-        private EntityBuilder(EntityFactory<T> entityFactory, MediaType<T, ? extends Format<T>> mediaType) {
-            this.entityFactory = entityFactory;
-            this.mediaType = mediaType;
-        }
-    }
-
     private class DespotPartialElement {
         private final SpecificationPartial<? super ParamType> specification;
         private final ResponsePartial<? super ParamType> response;
-        private int status;
         private final List<ResponseModifier> modifiers;
 
-        private DespotPartialElement(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> response, int status, List<ResponseModifier> modifiers) {
+        private DespotPartialElement(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> response, List<ResponseModifier> modifiers) {
             this.specification = specification;
             this.response = response;
-            this.status = status;
             this.modifiers = modifiers;
         }
-    }
-
-    public static enum Method {
-        GET, POST, PUT, DELETE;
     }
 }
