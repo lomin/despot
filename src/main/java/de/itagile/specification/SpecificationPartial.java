@@ -16,7 +16,7 @@ public abstract class SpecificationPartial<ParamType> implements Completable<Par
                 throw new IllegalStateException();
             }
         };
-    };
+    }
 
     public static <ParamType> SpecificationPartial<? super ParamType> and(final SpecificationPartial<? super ParamType> first, final SpecificationPartial<? super ParamType> second, Class<ParamType> _) {
         return new SpecificationPartial<ParamType>() {
@@ -30,7 +30,7 @@ public abstract class SpecificationPartial<ParamType> implements Completable<Par
                 throw new IllegalStateException();
             }
         };
-    };
+    }
 
     public static <ParamType> SpecificationPartial<ParamType> or(final SpecificationPartial<ParamType> first, final SpecificationPartial<ParamType> second) {
         return new SpecificationPartial<ParamType>() {
@@ -44,7 +44,7 @@ public abstract class SpecificationPartial<ParamType> implements Completable<Par
                 throw new IllegalStateException();
             }
         };
-    };
+    }
 
     public static <ParamType> SpecificationPartial<ParamType> TRUE(Class<ParamType> clazz) {
         return new SpecificationPartial<ParamType>() {
@@ -58,5 +58,5 @@ public abstract class SpecificationPartial<ParamType> implements Completable<Par
                 return true;
             }
         };
-    };
+    }
 }

@@ -1,7 +1,7 @@
 package de.itagile.mediatype.simpleJson;
 
-import de.itagile.model.Model;
 import de.itagile.model.Key;
+import de.itagile.model.Model;
 import org.json.simple.JSONObject;
 
 import java.util.HashMap;
@@ -42,7 +42,7 @@ public class EnumField<T extends Enum> implements Key<T>, JsonFormat {
         type.put("subtype", "String");
         type.put("default", this.undefined.toString());
         Set values = new HashSet();
-        for (T key: keys) {
+        for (T key : keys) {
             values.add(key.toString());
         }
         type.put("values", values);

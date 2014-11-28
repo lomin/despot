@@ -3,9 +3,7 @@ package de.itagile.api;
 import de.itagile.despot.Despot;
 import de.itagile.despot.DespotSpecParser;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class SpecBuilder extends Builder {
 
@@ -22,6 +20,12 @@ public class SpecBuilder extends Builder {
 
     static MethodBuilder method() {
         return new MethodBuilder();
+    }
+
+    public Set<Map> buildAsSet() {
+        Set<Map> result = new HashSet<>();
+        result.add(model);
+        return result;
     }
 
     SpecBuilder addEndpoint(EndpointBuilder endpoint) {

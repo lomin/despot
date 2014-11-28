@@ -18,18 +18,13 @@ public class DespotSpecParser {
     public static final String URI = "uri";
     public static final String ENDPOINTS = "endpoints";
 
-    public Set<Map> getSpec(String path, Despot.Method method, String uri) {
-        try {
-            InputStream specStream = getClass().getResourceAsStream(path);
-            Map completeSpec = (Map) new JSONParser().parse(new InputStreamReader(specStream));
-            HashSet<Map> result = new HashSet<>();
-            visitAllEndpoints(method, uri, completeSpec, result);
-            return result;
-        } catch (IOException e) {
-            throw new RuntimeException("Could not find <" + path + "> on classpath.");
-        } catch (ParseException e) {
-            throw new RuntimeException("Could not parse <" + path + "> as json.");
-        }
+    public Set<Map> getSpec(Despot.Method method, String uri, InputStream stream) throws IOException, ParseException {
+        InputStream specStream = stream;
+        Map completeSpec = (Map) new JSONParser().parse(new InputStreamReader(specStream));
+        Set<Map> result = new HashSet<>();
+        visitAllEndpoints(method, uri, completeSpec, result);
+        return result;
+
     }
 
     public void visitAllEndpoints(Despot.Method method, String uri, Map completeSpec, Set<Map> result) {

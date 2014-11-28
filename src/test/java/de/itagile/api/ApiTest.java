@@ -1,17 +1,13 @@
 package de.itagile.api;
 
 import de.itagile.despot.*;
-import de.itagile.mediatype.JSONObjectEntityFactory;
 import de.itagile.mediatype.MediaTypeTest;
 import de.itagile.specification.SpecificationPartial;
-import org.json.simple.JSONObject;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static de.itagile.api.FullResponse.full_response;
 import static de.itagile.api.IsInvalidPage.is_invalid_page;
@@ -28,7 +24,8 @@ import static de.itagile.despot.Despot.despot;
 import static de.itagile.despot.Despot.pre;
 import static de.itagile.specification.SpecificationPartial.and;
 import static de.itagile.specification.SpecificationPartial.not;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class ApiTest {
 
@@ -53,11 +50,6 @@ public class ApiTest {
                     .verify("/de.itagile.spec/spec.json");
     private static SpecificationPartial<IProductSearchParams> x;
     private static ResponsePartial<? super IProductSearchParams> y;
-
-    private static EntityFactory<JSONObject> __HANS__() {
-        EntityFactory<JSONObject> entityFactory = new JSONObjectEntityFactory();
-        return entityFactory;
-    }
 
     private static ResponseModifier status(final int status) {
         return new ResponseModifier() {
@@ -97,35 +89,8 @@ public class ApiTest {
     }
 
     @Test
-    public void doesNotFulfillsTheSpecIfNoMatchingEndpointUri() throws Exception {
-        Map spec =
-                spec()
-                        .addEndpoint(
-                                endpoint()
-                                        .uri("/test"))
-                        .build();
-
-        assertFalse(PRODUCT_SEARCH_API.verifyAllEndpoints(spec));
-    }
-
-    @Test
-    public void doesNotFulfillsTheSpecIfNoMatchingEndpointMethod() throws Exception {
-        Map spec =
-                spec()
-                        .addEndpoint(
-                                endpoint()
-                                        .uri("/items/{path}")
-                                        .addMethod(
-                                                method()
-                                                        .method(Despot.Method.POST)))
-                        .build();
-
-        assertFalse(PRODUCT_SEARCH_API.verifyAllEndpoints(spec));
-    }
-
-    @Test
     public void doesNotFulfillsTheSpecIfNoMatchingStatusCode() throws Exception {
-        Map spec =
+        Set<Map> spec =
                 spec()
                         .addEndpoint(
                                 endpoint()
@@ -134,14 +99,19 @@ public class ApiTest {
                                                 method()
                                                         .method(Despot.Method.GET)
                                                         .addStatusCode(201, "text/html")))
-                        .build();
+                        .buildAsSet();
 
-        assertFalse(PRODUCT_SEARCH_API.verifyAllEndpoints(spec));
+        try {
+            PRODUCT_SEARCH_API.verify(spec);
+            fail();
+        } catch (IllegalStateException e) {
+            // expected
+        }
     }
 
     @Test
     public void doesNotFulfillsTheSpecIfNoMatchingMediaType() throws Exception {
-        Map spec =
+        Set<Map> spec =
                 spec()
                         .addEndpoint(
                                 endpoint()
@@ -152,23 +122,12 @@ public class ApiTest {
                                                         .addStatusCode(200, "text/html")
                                                         .addStatusCode(301, "text/html")
                                                         .addStatusCode(404, "text/html")))
-                        .build();
-        assertFalse(PRODUCT_SEARCH_API.verifyAllEndpoints(spec));
-    }
-
-    @Test
-    public void testName() throws Exception {
-        List<Map> l = new ArrayList<>();
-        Map m1 = new HashMap<>();
-        m1.put("hans", 1);
-        l.add(m1);
-
-        Map m2 = new HashMap<>();
-        m2.put("hans", 1);
-
-        l.remove(m2);
-
-        assertEquals(m1, m2);
-        assertTrue(l.isEmpty());
+                        .buildAsSet();
+        try {
+            PRODUCT_SEARCH_API.verify(spec);
+            fail();
+        } catch (IllegalStateException e) {
+            // expected
+        }
     }
 }

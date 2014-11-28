@@ -16,7 +16,7 @@ public class Specifications {
                 return !spec.isTrue();
             }
         };
-    };
+    }
 
     public static Specification and(final Specification first, final Specification second) {
         return new Specification() {
@@ -25,7 +25,7 @@ public class Specifications {
                 return first.isTrue() && second.isTrue();
             }
         };
-    };
+    }
 
     public static Specification or(final Specification first, final Specification second) {
         return new Specification() {
@@ -34,9 +34,10 @@ public class Specifications {
                 return first.isTrue() || second.isTrue();
             }
         };
-    };
+    }
 
     public static Specification TRUE() {
         return TRUE;
-    };
+    }
+
 }

@@ -2,19 +2,19 @@ package de.itagile.despot;
 
 import de.itagile.specification.Specification;
 import de.itagile.specification.SpecificationPartial;
-import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import javax.ws.rs.core.Response;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.IOException;
 import java.util.*;
 
 public class Despot<ParamType> {
 
     private final List<DespotRoute> routes = new ArrayList<>();
-    private final Set<Map> specs = new HashSet<>();
+    private final Set<Map> routesSpecs = new HashSet<>();
     private String endpoint = "/";
     private Method method = Method.GET;
+    private DespotSpecParser specParser = new DespotSpecParser();
 
     public static <T> Despot<T> despot(String uri, Method method, Class<T> _) {
         Despot<T> despot = new Despot<>();
@@ -29,12 +29,10 @@ public class Despot<ParamType> {
 
     private Despot<ParamType> addRoute(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, List<ResponseModifier> modifiers) {
         Map spec = new HashMap();
-        spec.put(DespotSpecParser.URI, endpoint);
-        spec.put(DespotSpecParser.METHOD, method.name());
         for (ResponseModifier modifier : modifiers) {
             modifier.spec(spec);
         }
-        specs.add(spec);
+        this.routesSpecs.add(spec);
         this.routes.add(new DespotRoute(specification, option, modifiers));
         return this;
     }
@@ -69,76 +67,44 @@ public class Despot<ParamType> {
     }
 
     public Response response(ParamType param) {
-        for (DespotRoute element : routes) {
-            Specification specification = element.specification.create(param);
+        for (DespotRoute route : routes) {
+            Specification specification = route.specification.create(param);
             if (specification.isTrue()) {
-                Response.ResponseBuilder responseBuilder = Response.noContent();
-                DespotResponse response = element.response.create(param);
-                response = response.modify(responseBuilder, response);
-                for (ResponseModifier modifier : element.modifiers) {
-                    response = modifier.modify(responseBuilder, response);
-                }
-                return responseBuilder.build();
+                return buildResponse(route, param);
             }
         }
         throw new IllegalStateException("No route matched and no fallback defined.");
     }
 
+    private Response buildResponse(DespotRoute element, ParamType param) {
+        Response.ResponseBuilder responseBuilder = Response.noContent();
+        DespotResponse response = element.response.create(param);
+        response = response.modify(responseBuilder, response);
+        for (ResponseModifier modifier : element.modifiers) {
+            response = modifier.modify(responseBuilder, response);
+        }
+        return responseBuilder.build();
+    }
+
     public Despot<ParamType> verify(String path) {
+        Set<Map> canonicalSpec;
         try {
-            InputStream specStream = getClass().getResourceAsStream(path);
-            Map spec = (Map) new JSONParser().parse(new InputStreamReader(specStream));
-            boolean hasBeenVerified = verifyAllEndpoints(spec);
-            if (!hasBeenVerified) {
-                throw new IllegalStateException();
-            }
+            canonicalSpec = specParser.getSpec(method, endpoint, getClass().getResourceAsStream(path));
+        } catch (IOException e) {
+            throw new RuntimeException("Could not find <" + path + "> on classpath.");
+        } catch (ParseException e) {
+            throw new RuntimeException("Could not parse <" + path + "> as json.");
+        }
+        return verify(canonicalSpec);
+    }
+
+    public Despot<ParamType> verify(Set<Map> canonicalSpec) {
+        Set<Map> routesSpecsCopy = new HashSet<>(routesSpecs);
+        routesSpecsCopy.removeAll(canonicalSpec);
+        if (routesSpecsCopy.isEmpty()) {
             return this;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
-    }
-
-    public boolean verifyAllEndpoints(Map spec) {
-        List endpoints = (List) spec.get(DespotSpecParser.ENDPOINTS);
-        Set<Map> sCopy = new HashSet<>(specs);
-        Set<Map> jsonSpecs = new HashSet<Map>();
-        for (Object element : endpoints) {
-            Map endpoint = (Map) element;
-            if (this.endpoint.equals(endpoint.get(DespotSpecParser.URI))) {
-                return verifyAllMethods(endpoint, sCopy, jsonSpecs);
-            }
-        }
-        return false;
-    }
-
-    private boolean verifyAllMethods(Map endpoint, Set<Map> sCopy, Set<Map> specs) {
-        List methods = (List) endpoint.get(DespotSpecParser.METHODS);
-        for (Object element : methods) {
-            Map method = (Map) element;
-            if (this.method.name().equals(method.get(DespotSpecParser.METHOD))) {
-                return verifyAllStatusCodes(method, sCopy, specs);
-            }
-        }
-        return false;
-    }
-
-    private boolean verifyAllStatusCodes(Map method, Set<Map> sCopy, Set<Map> jsonSpecs) {
-        List allStatusCodes = (List) method.get(DespotSpecParser.RESPONSES);
-        for (Object element : allStatusCodes) {
-            Map spec = new HashMap();
-            spec.put(DespotSpecParser.URI, endpoint);
-            spec.put(DespotSpecParser.METHOD, this.method.name());
-            Map statusCodeMap = (Map) element;
-            String statusCodeString = statusCodeMap.get(DespotSpecParser.STATUS_CODE).toString();
-            int statusCode = Integer.valueOf(statusCodeString);
-            spec.put(DespotSpecParser.STATUS_CODE, statusCode);
-            Object mediatype = statusCodeMap.get(DespotSpecParser.MEDIATYPE);
-            if (mediatype != null) spec.put(DespotSpecParser.MEDIATYPE, mediatype);
-            jsonSpecs.add(spec);
-        }
-        sCopy.removeAll(jsonSpecs);
-        jsonSpecs.removeAll(this.specs);
-        return sCopy.isEmpty(); // && jsonSpecs.isEmpty();
+        throw new IllegalStateException(routesSpecsCopy + " do not fulfill the spec: " + canonicalSpec);
     }
 
     public static enum Method {

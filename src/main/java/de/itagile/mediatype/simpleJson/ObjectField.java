@@ -1,7 +1,7 @@
 package de.itagile.mediatype.simpleJson;
 
-import de.itagile.model.Model;
 import de.itagile.model.Key;
+import de.itagile.model.Model;
 import org.json.simple.JSONObject;
 
 import java.util.Map;

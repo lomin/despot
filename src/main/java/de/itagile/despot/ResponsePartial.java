@@ -1,7 +1,7 @@
 package de.itagile.despot;
 
-import de.itagile.model.Model;
 import de.itagile.model.HashModel;
+import de.itagile.model.Model;
 
 import javax.ws.rs.core.Response;
 import java.util.Map;

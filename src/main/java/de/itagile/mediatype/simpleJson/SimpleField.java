@@ -1,11 +1,8 @@
 package de.itagile.mediatype.simpleJson;
 
-import de.itagile.model.Model;
 import de.itagile.model.Key;
+import de.itagile.model.Model;
 import org.json.simple.JSONObject;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public abstract class SimpleField<T> implements Key<T>, JsonFormat {
     public final String name;

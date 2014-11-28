@@ -1,9 +1,9 @@
 package de.itagile.mediatype;
 
 import de.itagile.despot.EntityFactory;
-import de.itagile.mediatype.html.TemplateField;
 import de.itagile.mediatype.html.HtmlFormat;
 import de.itagile.mediatype.html.HtmlModelField;
+import de.itagile.mediatype.html.TemplateField;
 import de.itagile.mediatype.html.Viewable;
 import de.itagile.mediatype.simpleJson.*;
 import de.itagile.model.HashModel;
@@ -19,14 +19,13 @@ public class MediaTypeTest {
 
     public static final StringField REL_FIELD = new StringField("rel");
     public static final StringField LINK_FIELD = new StringField("link");
-    public static final JSONObjectEntityFactory JSON_OBJECT_ENTITY_FACTORY = new JSONObjectEntityFactory();
     public static final EntityFactory<Viewable> VIEWABLE_ENTITY_FACTORY = new EntityFactory<Viewable>() {
         @Override
         public Viewable create() {
             return new Viewable();
         }
     };
-    public static final MediaType<JSONObject, JsonFormat> LINK_SCHEMA_JSON = new MediaType<JSONObject, JsonFormat>("application/vnd.itagile.link+json", JSON_OBJECT_ENTITY_FACTORY,  REL_FIELD, LINK_FIELD);
+    public static final JsonMediaType LINK_SCHEMA_JSON = new LinkSchemaMediaType(REL_FIELD, LINK_FIELD);
     public static final SetField LINKS_FIELD = new SetField("links", LINK_SCHEMA_JSON);
     public static final IntegerField PRICE_FIELD = new IntegerField("price");
     public static final RequiredStringField<String> PRODUCT_ID_FIELD = new RequiredStringField<>("productId");
@@ -38,9 +37,9 @@ public class MediaTypeTest {
                     AVAILABILITIES);
     public static final StringField PRODUCT_NAME_FIELD = new StringField("name");
     public static final RequiredStringField<String> VARIATION_ID_FIELD = new RequiredStringField<>("variationId");
-    public static final MediaType<JSONObject, JsonFormat> VARIATION_MEDIA_TYPE = new MediaType<JSONObject, JsonFormat>("application/vnd.itagile.variation+json",JSON_OBJECT_ENTITY_FACTORY, VARIATION_ID_FIELD, PRICE_FIELD, AVAILABILITY_FIELD);
+    public static final JsonMediaType VARIATION_MEDIA_TYPE = new VariationMediaType(VARIATION_ID_FIELD, PRICE_FIELD, AVAILABILITY_FIELD);
     public static final ObjectField VARIATION_FIELD = new ObjectField("variation", VARIATION_MEDIA_TYPE);
-    public static final MediaType<JSONObject, JsonFormat> PRODUCT_MEDIA_TYPE = new MediaType<JSONObject, JsonFormat>("application/vnd.itagile.product+json", JSON_OBJECT_ENTITY_FACTORY, PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD, VARIATION_FIELD, AVAILABILITY_FIELD, LINKS_FIELD);
+    public static final JsonMediaType PRODUCT_MEDIA_TYPE = new ProductMediaType(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD, VARIATION_FIELD, AVAILABILITY_FIELD, LINKS_FIELD);
     public static final TemplateField TEMPLATE_NAME_FIELD = new TemplateField();
     public static final HtmlModelField TEMPLATE_MODEL_FIELD = new HtmlModelField(set(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD));
     public static final MediaType<Viewable, HtmlFormat> HTML_MEDIA_TYPE = new MediaType<Viewable, HtmlFormat>("application/vnd.itagile.product+html", VIEWABLE_ENTITY_FACTORY, TEMPLATE_NAME_FIELD, TEMPLATE_MODEL_FIELD);
@@ -57,7 +56,6 @@ public class MediaTypeTest {
         Collections.addAll(result, keys);
         return result;
     }
-
 
     @Test
     public void testMediaType() throws Exception {
@@ -145,5 +143,34 @@ public class MediaTypeTest {
 
         assertEquals(htmlSpec, VARIATION_MEDIA_TYPE.getSpec());
 
+    }
+
+    public static class VariationMediaType extends JsonMediaType {
+        public VariationMediaType(JsonFormat... jsonFormats) {
+            super("application/vnd.itagile.variation+json", jsonFormats);
+        }
+    }
+
+    public static class ProductMediaType extends JsonMediaType {
+        public ProductMediaType(JsonFormat... jsonFormats) {
+            super("application/vnd.itagile.product+json", jsonFormats);
+        }
+    }
+
+    public static class LinkSchemaMediaType extends JsonMediaType {
+        public LinkSchemaMediaType(JsonFormat... jsonFormats) {
+            super("application/vnd.itagile.link+json", jsonFormats);
+        }
+    }
+
+    public static abstract class JsonMediaType extends MediaType<JSONObject, JsonFormat> {
+        public JsonMediaType(String name, JsonFormat... jsonFormats) {
+            super(name, new EntityFactory<JSONObject>() {
+                @Override
+                public JSONObject create() {
+                    return new JSONObject();
+                }
+            }, jsonFormats);
+        }
     }
 }
