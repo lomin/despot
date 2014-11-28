@@ -10,7 +10,7 @@ import java.util.*;
 
 public class DespotSpecParser {
 
-    public static final String RESPONSES = "status_codes";
+    public static final String RESPONSES = "responses";
     public static final String METHODS = "methods";
     public static final String METHOD = "method";
     public static final String STATUS_CODE = "status_code";
