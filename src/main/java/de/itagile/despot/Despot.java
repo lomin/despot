@@ -39,13 +39,8 @@ public class Despot<ParamType> {
         return this;
     }
 
-    public Despot<ParamType> next(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, ResponseModifier2<Integer> modifier, ResponseModifier... responseModifiers) {
-        List<ResponseModifier> modifiers = new ArrayList<>();
-        modifiers.add(modifier);
-        for (ResponseModifier r : responseModifiers) {
-            modifiers.add(r);
-        }
-        return addOption(specification, option, modifiers);
+    public Despot<ParamType> next(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, ResponseModifier... responseModifiers) {
+        return addOption(specification, option, Arrays.asList(responseModifiers));
     }
 
     public Despot<ParamType> next(Despot<ParamType> preDespot) {
@@ -55,12 +50,7 @@ public class Despot<ParamType> {
         return this;
     }
 
-    public Despot<ParamType> last(ResponsePartial<ParamType> option, ResponseModifier2<Integer> modifier, ResponseModifier... responseModifiers) {
-        List<ResponseModifier> modifiers = new ArrayList<>();
-        modifiers.add(modifier);
-        for (ResponseModifier r : responseModifiers) {
-            modifiers.add(r);
-        }
+    public Despot<ParamType> last(ResponsePartial<ParamType> option, ResponseModifier... responseModifiers) {
         return addOption(new SpecificationPartial<ParamType>() {
             @Override
             public Specification create(ParamType param) {
@@ -71,7 +61,7 @@ public class Despot<ParamType> {
             public boolean isTrue() {
                 return true;
             }
-        }, option, modifiers);
+        }, option, Arrays.asList(responseModifiers));
     }
 
     public Despot<ParamType> error(Class<? extends Exception> exception, ResponseModifier... responseModifiers) {
@@ -164,8 +154,8 @@ public class Despot<ParamType> {
             this.s = s;
         }
 
-        public PreDespot<ParamType> next(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, ResponseModifier2<Integer> status, ResponseModifier... responseModifiers) {
-            super.next(SpecificationPartial.and(s, specification, null), option, status, responseModifiers);
+        public PreDespot<ParamType> next(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, ResponseModifier... responseModifiers) {
+            super.next(SpecificationPartial.and(s, specification, null), option, responseModifiers);
             return this;
         }
     }

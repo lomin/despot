@@ -1,9 +1,6 @@
 package de.itagile.api;
 
-import de.itagile.despot.Despot;
-import de.itagile.despot.DespotResponse;
-import de.itagile.despot.EntityFactory;
-import de.itagile.despot.ResponsePartial;
+import de.itagile.despot.*;
 import de.itagile.mediatype.JSONObjectEntityFactory;
 import de.itagile.mediatype.MediaTypeTest;
 import de.itagile.specification.SpecificationPartial;
@@ -62,8 +59,8 @@ public class ApiTest {
         return entityFactory;
     }
 
-    private static Despot.ResponseModifier2<Integer> status(final int status) {
-        return new Despot.ResponseModifier2<Integer>() {
+    private static ResponseModifier status(final int status) {
+        return new ResponseModifier() {
             @Override
             public void spec(Map spec) {
                 spec.put("status_code", status);
@@ -73,11 +70,6 @@ public class ApiTest {
             public DespotResponse modify(Response.ResponseBuilder responseBuilder, DespotResponse despotResponse) {
                 responseBuilder.status(status);
                 return despotResponse;
-            }
-
-            @Override
-            public Integer get() {
-                return status;
             }
 
             @Override
