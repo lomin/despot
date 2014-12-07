@@ -8,13 +8,24 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.*;
 
-public class Despot<ParamType> {
+public class Despot<ParamType> implements Verifiable {
 
     private final List<DespotRoute> routes = new ArrayList<>();
     private final Set<Map> routesSpecs = new HashSet<>();
+    private final Verifier verifier;
     private String endpoint = "/";
     private Method method = Method.GET;
     private DespotSpecParser specParser = new DespotSpecParser();
+
+    public Despot(Verifier verifier, String uri, Method method) {
+        this.verifier = verifier;
+        this.endpoint = uri;
+        this.method = method;
+    }
+
+    public Despot() {
+        this.verifier = new DespotVerifier();
+    }
 
     public static <T> Despot<T> despot(String uri, Method method, Class<T> _) {
         Despot<T> despot = new Despot<>();
@@ -28,11 +39,12 @@ public class Despot<ParamType> {
     }
 
     private Despot<ParamType> addRoute(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, List<ResponseModifier> modifiers) {
-        Map spec = new HashMap();
+        Map<String, Object> spec = new HashMap<>();
         for (ResponseModifier modifier : modifiers) {
             modifier.spec(spec);
         }
         this.routesSpecs.add(spec);
+        this.verifier.add(spec);
         this.routes.add(new DespotRoute(specification, option, modifiers));
         return this;
     }
@@ -87,7 +99,7 @@ public class Despot<ParamType> {
     }
 
     public Despot<ParamType> verify(String path) {
-        Set<Map> canonicalSpec;
+        Set<Map<String, Object>> canonicalSpec;
         try {
             canonicalSpec = specParser.getSpec(method, endpoint, getClass().getResourceAsStream(path));
         } catch (IOException e) {
@@ -98,13 +110,11 @@ public class Despot<ParamType> {
         return verify(canonicalSpec);
     }
 
-    public Despot<ParamType> verify(Set<Map> canonicalSpec) {
-        Set<Map> routesSpecsCopy = new HashSet<>(routesSpecs);
-        routesSpecsCopy.removeAll(canonicalSpec);
-        if (routesSpecsCopy.isEmpty()) {
+    public Despot<ParamType> verify(Set<Map<String, Object>> canonicalSpec) {
+        if (verifier.verify(canonicalSpec)) {
             return this;
         }
-        throw new IllegalStateException(routesSpecsCopy + " do not fulfill the spec: " + canonicalSpec);
+        throw new IllegalStateException(routesSpecs + " do not fulfill the spec: " + canonicalSpec);
     }
 
     public static enum Method {
@@ -116,6 +126,7 @@ public class Despot<ParamType> {
         private final SpecificationPartial<ParamType> s;
 
         private PreDespot(SpecificationPartial<ParamType> s) {
+            super();
             this.s = s;
         }
 

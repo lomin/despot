@@ -17,16 +17,12 @@ import static org.junit.Assert.assertEquals;
 
 public class MediaTypeTest {
 
-    public static final StringField REL_FIELD = new StringField("rel");
-    public static final StringField LINK_FIELD = new StringField("link");
     public static final EntityFactory<Viewable> VIEWABLE_ENTITY_FACTORY = new EntityFactory<Viewable>() {
         @Override
         public Viewable create() {
             return new Viewable();
         }
     };
-    public static final JsonMediaType LINK_SCHEMA_JSON = new LinkSchemaMediaType(REL_FIELD, LINK_FIELD);
-    public static final SetField LINKS_FIELD = new SetField("links", LINK_SCHEMA_JSON);
     public static final IntegerField PRICE_FIELD = new IntegerField("price");
     public static final RequiredStringField<String> PRODUCT_ID_FIELD = new RequiredStringField<>("productId");
     public static final Set<Availability> AVAILABILITIES = set(Availability.AVAILABLE, Availability.DELAYED, Availability.SOLDOUT);
@@ -38,11 +34,11 @@ public class MediaTypeTest {
     public static final StringField PRODUCT_NAME_FIELD = new StringField("name");
     public static final RequiredStringField<String> VARIATION_ID_FIELD = new RequiredStringField<>("variationId");
     public static final JsonMediaType VARIATION_MEDIA_TYPE = new VariationMediaType(VARIATION_ID_FIELD, PRICE_FIELD, AVAILABILITY_FIELD);
-    public static final ObjectField VARIATION_FIELD = new ObjectField("variation", VARIATION_MEDIA_TYPE);
-    public static final JsonMediaType PRODUCT_MEDIA_TYPE = new ProductMediaType(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD, VARIATION_FIELD, AVAILABILITY_FIELD, LINKS_FIELD);
+    public static final MediaTypeSetField VARIATIONS_FIELD = new MediaTypeSetField("variations", VARIATION_MEDIA_TYPE);
+    public static final JsonMediaType PRODUCT_MEDIA_TYPE = new ProductMediaType(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD, VARIATIONS_FIELD);
     public static final TemplateField TEMPLATE_NAME_FIELD = new TemplateField();
     public static final HtmlModelField TEMPLATE_MODEL_FIELD = new HtmlModelField(set(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD));
-    public static final MediaType<Viewable, HtmlFormat> HTML_MEDIA_TYPE = new MediaType<Viewable, HtmlFormat>("application/vnd.itagile.product+html", VIEWABLE_ENTITY_FACTORY, TEMPLATE_NAME_FIELD, TEMPLATE_MODEL_FIELD);
+    public static final MediaType<Viewable, HtmlFormat> HTML_MEDIA_TYPE = new MediaType<Viewable, HtmlFormat>("application_vnd.itagile.product+html", VIEWABLE_ENTITY_FACTORY, TEMPLATE_NAME_FIELD, TEMPLATE_MODEL_FIELD);
 
     private static <T> Set<T> set(T... keys) {
         Set<T> result = new HashSet<T>();
@@ -59,30 +55,21 @@ public class MediaTypeTest {
 
     @Test
     public void testMediaType() throws Exception {
-        Model link1 = new HashModel().
-                update(REL_FIELD, "rel1").
-                update(LINK_FIELD, "http://otto.de/1");
-        Model link2 = new HashModel().
-                update(REL_FIELD, "rel2").
-                update(LINK_FIELD, "http://otto.de/2");
         Model variation = new HashModel().
                 update(PRICE_FIELD, 100).
                 update(VARIATION_ID_FIELD, "ABC567").
                 update(AVAILABILITY_FIELD, Availability.FORBIDDEN);
-        Set<Model> links = new HashSet<>();
-        links.add(link1);
-        links.add(link2);
         Model product = new HashModel().
                 update(PRODUCT_ID_FIELD, "XY123").
                 update(PRODUCT_NAME_FIELD, "TestProduct").
-                update(VARIATION_FIELD, variation).
-                update(LINKS_FIELD, links);
+                update(VARIATIONS_FIELD, set(variation));
 
-        JSONObject entity = PRODUCT_MEDIA_TYPE.transform(product);
+        JSONObject entity = PRODUCT_MEDIA_TYPE.modify(product);
 
         assertEquals("XY123", entity.get(PRODUCT_ID_FIELD.name));
         assertEquals("TestProduct", entity.get(PRODUCT_NAME_FIELD.name));
-        JSONObject variation1 = (JSONObject) entity.get("variation");
+        Iterable variations = (Iterable) entity.get("variations");
+        Map variation1 = (Map) variations.iterator().next();
         assertEquals("AVAILABLE", variation1.get(AVAILABILITY_FIELD.name));
         assertEquals(100, variation1.get(PRICE_FIELD.name));
     }
@@ -96,7 +83,7 @@ public class MediaTypeTest {
                 .update(TEMPLATE_NAME_FIELD, "/path/to/template1")
                 .update(TEMPLATE_MODEL_FIELD, modelEntity);
 
-        Viewable entity = HTML_MEDIA_TYPE.transform(viewableModel);
+        Viewable entity = HTML_MEDIA_TYPE.modify(viewableModel);
 
         assertEquals("/path/to/template1", entity.getTemplate());
         assertEquals("ModelTestProductId", entity.getViewModel().get("productId"));
@@ -106,7 +93,7 @@ public class MediaTypeTest {
     @Test
     public void testMediaTypeHasSpecRepresentation() throws Exception {
         Map htmlSpec = new HashMap();
-        htmlSpec.put("name", "application/vnd.itagile.variation+json");
+        htmlSpec.put("name", "application_vnd.itagile.variation+json");
 
         Set fields = new HashSet();
 
@@ -114,7 +101,7 @@ public class MediaTypeTest {
         variationId.put("name", "variationId");
         Map variationIdType = new HashMap();
         variationIdType.put("name", "String");
-        variationIdType.put("required", "true");
+        variationIdType.put("required", true);
         variationId.put("type", variationIdType);
         fields.add(variationId);
 
@@ -147,19 +134,13 @@ public class MediaTypeTest {
 
     public static class VariationMediaType extends JsonMediaType {
         public VariationMediaType(JsonFormat... jsonFormats) {
-            super("application/vnd.itagile.variation+json", jsonFormats);
+            super("application_vnd.itagile.variation+json", jsonFormats);
         }
     }
 
     public static class ProductMediaType extends JsonMediaType {
         public ProductMediaType(JsonFormat... jsonFormats) {
-            super("application/vnd.itagile.product+json", jsonFormats);
-        }
-    }
-
-    public static class LinkSchemaMediaType extends JsonMediaType {
-        public LinkSchemaMediaType(JsonFormat... jsonFormats) {
-            super("application/vnd.itagile.link+json", jsonFormats);
+            super("application_vnd.itagile.product+json", jsonFormats);
         }
     }
 

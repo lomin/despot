@@ -14,16 +14,12 @@ public class SpecBuilder extends Builder {
         return new EndpointBuilder();
     }
 
-    public static SpecBuilder spec() {
-        return new SpecBuilder();
-    }
-
     static MethodBuilder method() {
         return new MethodBuilder();
     }
 
-    public Set<Map> buildAsSet() {
-        Set<Map> result = new HashSet<>();
+    public Set<Map<String, Object>> buildAsSet() {
+        Set<Map<String, Object>> result = new HashSet<>();
         result.add(model);
         return result;
     }

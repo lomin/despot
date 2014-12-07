@@ -17,17 +17,51 @@ public class DespotSpecParser {
     public static final String MEDIATYPE = "mediatype";
     public static final String URI = "uri";
     public static final String ENDPOINTS = "endpoints";
+    public static final String ALL_MEDIATYPES = "media_types";
+    public static final String FIELDS = "fields";
 
-    public Set<Map> getSpec(Despot.Method method, String uri, InputStream stream) throws IOException, ParseException {
-        InputStream specStream = stream;
-        Map completeSpec = (Map) new JSONParser().parse(new InputStreamReader(specStream));
-        Set<Map> result = new HashSet<>();
-        visitAllEndpoints(method, uri, completeSpec, result);
-        return result;
+    public Set<Map<String, Object>> getSpec(Despot.Method method, String uri, InputStream stream) throws IOException, ParseException {
+        Map completeSpec = (Map) new JSONParser().parse(new InputStreamReader(stream));
+        Set<Map<String, Object>> spec = extractSpecFrom(method, uri, completeSpec);
+        expandMediaType(spec, completeSpec);
+        return spec;
 
     }
 
-    public void visitAllEndpoints(Despot.Method method, String uri, Map completeSpec, Set<Map> result) {
+    private void expandMediaType(Set<Map<String, Object>> specs, Map completeSpec) {
+        for (Map<String, Object> mySpec : specs) {
+            Object myMediaType = mySpec.get(MEDIATYPE);
+            Iterable<Map<String, Object>> allMediaTypes = (Iterable<Map<String, Object>>) completeSpec.get(ALL_MEDIATYPES);
+            for (Map<String, Object> mediaType : allMediaTypes) {
+                if (mediaType.get("name").equals(myMediaType)) {
+                    expandFields(mediaType, completeSpec);
+                    mySpec.put(MEDIATYPE, mediaType);
+                }
+            }
+        }
+    }
+
+    private void expandFields(Map<String, Object> mediaType, Map completeSpec) {
+        Set expandedFields = new HashSet<>();
+        Iterable<String> myFields = (Iterable<String>) mediaType.get(FIELDS);
+        Iterable<Map<String, Object>> fields = (Iterable<Map<String, Object>>) completeSpec.get(FIELDS);
+        for (String myField : myFields) {
+            for (Map<String, Object> field : fields) {
+                if (field.get("name").equals(myField)) {
+                    expandedFields.add(new HashMap(field));
+                }
+            }
+        }
+        mediaType.put(FIELDS, expandedFields);
+    }
+
+    public Set<Map<String, Object>> extractSpecFrom(Despot.Method method, String uri, Map completeSpec) {
+        Set<Map<String, Object>> result = new HashSet<>();
+        visitAllEndpoints(method, uri, completeSpec, result);
+        return result;
+    }
+
+    public void visitAllEndpoints(Despot.Method method, String uri, Map completeSpec, Set<Map<String, Object>> result) {
         List endpoints = (List) completeSpec.get(ENDPOINTS);
         for (Object element : endpoints) {
             Map endpointMap = (Map) element;
@@ -37,7 +71,7 @@ public class DespotSpecParser {
         }
     }
 
-    private void visitAllMethods(Despot.Method method, Map endpointMap, Set<Map> result) {
+    private void visitAllMethods(Despot.Method method, Map endpointMap, Set<Map<String, Object>> result) {
         List methods = (List) endpointMap.get(METHODS);
         for (Object element : methods) {
             Map methodMap = (Map) element;
@@ -47,16 +81,16 @@ public class DespotSpecParser {
         }
     }
 
-    private void visitAllResponses(Map methodMap, Set<Map> result) {
+    private void visitAllResponses(Map methodMap, Set<Map<String, Object>> result) {
         List allStatusCodes = (List) methodMap.get(RESPONSES);
         for (Object element : allStatusCodes) {
-            Map spec = new HashMap();
+            Map<String, Object> spec = new HashMap<>();
             Map statusCodeMap = (Map) element;
-            String statusCodeString = statusCodeMap.get(STATUS_CODE).toString();
-            int statusCode = Integer.valueOf(statusCodeString);
-            spec.put(STATUS_CODE, statusCode);
+            spec.put(STATUS_CODE, statusCodeMap.get(STATUS_CODE));
             Object mediatype = statusCodeMap.get(MEDIATYPE);
-            if (mediatype != null) spec.put(MEDIATYPE, mediatype);
+            if (mediatype != null) {
+                spec.put(MEDIATYPE, statusCodeMap.get(MEDIATYPE));
+            }
             result.add(spec);
         }
     }

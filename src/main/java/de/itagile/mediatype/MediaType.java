@@ -18,11 +18,11 @@ public class MediaType<T, FormatType extends Format<T>> implements Iterable<Form
     public MediaType(String name, EntityFactory<T> entityFactory, FormatType... types) {
         this.name = name;
         this.entityFactory = entityFactory;
-        mediaTypes.addAll(Arrays.asList(types));
+        this.mediaTypes.addAll(Arrays.asList(types));
     }
 
-    public T transform(Model source) {
-        T target = this.create();
+    public T modify(Model source) {
+        T target = create();
         for (Format<T> key : this) {
             key.transform(source, target);
         }
@@ -70,24 +70,24 @@ public class MediaType<T, FormatType extends Format<T>> implements Iterable<Form
     @Override
     public String toString() {
         return "MediaType{" +
-                "name='" + name + '\'' +
+                "name='" + this.name + '\'' +
                 '}';
     }
 
     @Override
     public T create() {
-        return entityFactory.create();
+        return this.entityFactory.create();
     }
 
     @Override
     public DespotResponse modify(Response.ResponseBuilder responseBuilder, DespotResponse despotResponse) {
-        T entity = transform(despotResponse.responseModel());
+        T entity = modify(despotResponse.responseModel());
         responseBuilder.entity(entity);
         return despotResponse;
     }
 
     @Override
-    public void spec(Map spec) {
-        spec.put(DespotSpecParser.MEDIATYPE, name);
+    public void spec(Map<String, Object> spec) {
+        spec.put(DespotSpecParser.MEDIATYPE, getSpec());
     }
 }

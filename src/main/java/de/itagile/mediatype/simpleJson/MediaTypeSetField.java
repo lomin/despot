@@ -1,20 +1,22 @@
 package de.itagile.mediatype.simpleJson;
 
+import de.itagile.mediatype.MediaType;
 import de.itagile.model.Key;
 import de.itagile.model.Model;
 import org.json.simple.JSONObject;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class SetField implements Key<Set<Model>>, JsonFormat {
+public class MediaTypeSetField implements Key<Set<Model>>, JsonFormat {
     private final String name;
-    private final Iterable<JsonFormat> keys;
+    private final MediaType<JSONObject, JsonFormat> mediaType;
 
-    public SetField(String name, Iterable<JsonFormat> keys) {
+    public MediaTypeSetField(String name, MediaType<JSONObject, JsonFormat> mediaType) {
         this.name = name;
-        this.keys = keys;
+        this.mediaType = mediaType;
     }
 
     @Override
@@ -26,19 +28,20 @@ public class SetField implements Key<Set<Model>>, JsonFormat {
     public void transform(Model e, JSONObject result) {
         Set<Model> entities = e.get(this);
         if (entities == null) return;
-        Set set = new HashSet<Object>();
+        Set set = new HashSet<>();
         result.put(name, set);
         for (Model entity : entities) {
-            JSONObject kv = new JSONObject();
-            for (JsonFormat key : keys) {
-                key.transform(entity, kv);
-                set.add(kv);
-            }
+            JSONObject kv = mediaType.modify(entity);
+            set.add(kv);
         }
     }
 
     @Override
     public void spec(Map spec) {
-
+        spec.put("name", name);
+        Map type = new HashMap();
+        type.put("name", "MediaTypeSet");
+        type.put("mediatype", mediaType.getName());
+        spec.put("type", type);
     }
 }
