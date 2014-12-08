@@ -42,7 +42,7 @@ public class DespotSpecParserTest {
         assertEquals(mapOf(
                 "status_code", 405L,
                 "mediatype", mapOf(
-                        "name", "application_vnd.itagile.error+json",
+                        "name", "application/vnd.itagile.error+json",
                         "fields", setOf(
                                 mapOf(
                                         "name", "reason",

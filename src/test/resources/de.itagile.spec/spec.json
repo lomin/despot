@@ -8,14 +8,14 @@
           "responses": [
             {
               "status_code": 200,
-              "mediatype": "application_vnd.itagile.product+json"
+              "mediatype": "application/vnd.itagile.product+json"
             },
             {
               "status_code": 301
             },
             {
               "status_code": 404,
-              "mediatype": "application_vnd.itagile.error+json"
+              "mediatype": "application/vnd.itagile.error+json"
             }
           ]
         }
@@ -29,7 +29,7 @@
           "responses": [
             {
               "status_code": 405,
-              "mediatype": "application_vnd.itagile.error+json"
+              "mediatype": "application/vnd.itagile.error+json"
             }
           ]
         }
@@ -38,7 +38,7 @@
   ],
   "media_types": [
     {
-      "name": "application_vnd.itagile.product+json",
+      "name": "application/vnd.itagile.product+json",
       "fields": [
         "productId",
         "name",
@@ -46,7 +46,7 @@
       ]
     },
     {
-      "name": "application_vnd.itagile.variation+json",
+      "name": "application/vnd.itagile.variation+json",
       "fields": [
         "variationId",
         "availability",
@@ -54,7 +54,7 @@
       ]
     },
     {
-      "name": "application_vnd.itagile.error+json",
+      "name": "application/vnd.itagile.error+json",
       "fields": ["reason"]
     }
   ],
@@ -108,7 +108,7 @@
       "name": "variations",
       "type": {
         "name": "MediaTypeSet",
-        "mediatype": "application_vnd.itagile.variation+json"
+        "mediatype": "application/vnd.itagile.variation+json"
       }
     }
   ]

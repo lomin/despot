@@ -24,7 +24,7 @@ public class DespotSpecParser {
         Map completeSpec = (Map) new JSONParser().parse(new InputStreamReader(stream));
         Set<Map<String, Object>> spec = extractSpecFrom(method, uri, completeSpec);
         expandMediaType(spec, completeSpec);
-        return spec;
+        return new HashSet<>(spec); // necessary, since items in spec have been modified.
 
     }
 

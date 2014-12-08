@@ -38,7 +38,7 @@ public class MediaTypeTest {
     public static final JsonMediaType PRODUCT_MEDIA_TYPE = new ProductMediaType(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD, VARIATIONS_FIELD);
     public static final TemplateField TEMPLATE_NAME_FIELD = new TemplateField();
     public static final HtmlModelField TEMPLATE_MODEL_FIELD = new HtmlModelField(set(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD));
-    public static final MediaType<Viewable, HtmlFormat> HTML_MEDIA_TYPE = new MediaType<Viewable, HtmlFormat>("application_vnd.itagile.product+html", VIEWABLE_ENTITY_FACTORY, TEMPLATE_NAME_FIELD, TEMPLATE_MODEL_FIELD);
+    public static final MediaType<Viewable, HtmlFormat> HTML_MEDIA_TYPE = new MediaType<Viewable, HtmlFormat>("application/vnd.itagile.product+html", VIEWABLE_ENTITY_FACTORY, TEMPLATE_NAME_FIELD, TEMPLATE_MODEL_FIELD);
 
     private static <T> Set<T> set(T... keys) {
         Set<T> result = new HashSet<T>();
@@ -93,7 +93,7 @@ public class MediaTypeTest {
     @Test
     public void testMediaTypeHasSpecRepresentation() throws Exception {
         Map htmlSpec = new HashMap();
-        htmlSpec.put("name", "application_vnd.itagile.variation+json");
+        htmlSpec.put("name", "application/vnd.itagile.variation+json");
 
         Set fields = new HashSet();
 
@@ -134,13 +134,13 @@ public class MediaTypeTest {
 
     public static class VariationMediaType extends JsonMediaType {
         public VariationMediaType(JsonFormat... jsonFormats) {
-            super("application_vnd.itagile.variation+json", jsonFormats);
+            super("application/vnd.itagile.variation+json", jsonFormats);
         }
     }
 
     public static class ProductMediaType extends JsonMediaType {
         public ProductMediaType(JsonFormat... jsonFormats) {
-            super("application_vnd.itagile.product+json", jsonFormats);
+            super("application/vnd.itagile.product+json", jsonFormats);
         }
     }
 

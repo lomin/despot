@@ -111,10 +111,11 @@ public class Despot<ParamType> implements Verifiable {
     }
 
     public Despot<ParamType> verify(Set<Map<String, Object>> canonicalSpec) {
-        if (verifier.verify(canonicalSpec)) {
+        DespotVerifier.Verifaction verifaction = verifier.verify(canonicalSpec);
+        if (verifaction.verified()) {
             return this;
         }
-        throw new IllegalStateException(routesSpecs + " do not fulfill the spec: " + canonicalSpec);
+        throw verifaction.exception();
     }
 
     public static enum Method {
