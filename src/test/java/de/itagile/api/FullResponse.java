@@ -9,17 +9,14 @@ import de.itagile.model.Model;
 import javax.ws.rs.core.Response;
 
 public class FullResponse extends ResponsePartial<FullResponse.IFullResponseParams> {
-    private IFullResponseParams param;
-
-    private FullResponse() {
-    }
+    private final IFullResponseParams param;
 
     private FullResponse(IFullResponseParams param) {
         this.param = param;
     }
 
     public static FullResponse full_response() {
-        return new FullResponse();
+        return new FullResponse(null);
     }
 
     @Override
