@@ -1,8 +1,11 @@
 apply plugin: 'idea'
 apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'signing'
 
 group      = 'de.itagile'
-version    = '0.01'
+archivesBaseName = "despot"
+version    = '0.0.1'
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
@@ -15,6 +18,25 @@ repositories {
 
 task wrapper(type: Wrapper) {
     gradleVersion = '2.0'
+}
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}
+
+signing {
+    sign configurations.archives
 }
 
 dependencies {
