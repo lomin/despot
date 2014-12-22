@@ -7,14 +7,21 @@
           "method": "GET",
           "responses": [
             {
-              "status_code": 200,
+              "status-code": 200,
               "produces": "application/vnd.itagile.product+json"
             },
             {
-              "status_code": 301
+              "status-code": 301
             },
             {
-              "status_code": 404,
+              "status-code": 301,
+              "max-age": {
+                "duration": 5,
+                "time-unit": "SECONDS"
+              }
+            },
+            {
+              "status-code": 404,
               "produces": "application/vnd.itagile.error+json"
             }
           ]

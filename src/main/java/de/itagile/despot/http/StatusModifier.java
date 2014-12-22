@@ -1,9 +1,13 @@
-package de.itagile.despot;
+package de.itagile.despot.http;
+
+import de.itagile.despot.DespotResponse;
+import de.itagile.despot.ResponseModifier;
 
 import javax.ws.rs.core.Response;
 import java.util.Map;
 
 public class StatusModifier implements ResponseModifier {
+    public static final String KEY = "status-code";
     private final Integer status;
 
     public StatusModifier(Integer status) {
@@ -16,7 +20,7 @@ public class StatusModifier implements ResponseModifier {
 
     @Override
     public void spec(Map spec) {
-        spec.put(DespotSpecParser.STATUS_CODE, status.longValue());
+        spec.put(KEY, status.longValue());
     }
 
     @Override

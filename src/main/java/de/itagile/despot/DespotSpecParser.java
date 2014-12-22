@@ -13,7 +13,6 @@ public class DespotSpecParser {
     public static final String RESPONSES = "responses";
     public static final String METHODS = "methods";
     public static final String METHOD = "method";
-    public static final String STATUS_CODE = "status_code";
     public static final String MEDIATYPE = "produces";
     public static final String URI = "uri";
     public static final String ENDPOINTS = "endpoints";
@@ -87,14 +86,8 @@ public class DespotSpecParser {
     private void visitAllResponses(Map methodMap, Set<Map<String, Object>> result) {
         List allStatusCodes = (List) methodMap.get(RESPONSES);
         for (Object element : allStatusCodes) {
-            Map<String, Object> spec = new HashMap<>();
-            Map statusCodeMap = (Map) element;
-            spec.put(STATUS_CODE, statusCodeMap.get(STATUS_CODE));
-            Object mediatype = statusCodeMap.get(MEDIATYPE);
-            if (mediatype != null) {
-                spec.put(MEDIATYPE, statusCodeMap.get(MEDIATYPE));
-            }
-            result.add(spec);
+            result.add((Map) element);
+
         }
     }
 

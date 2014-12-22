@@ -1,6 +1,7 @@
 package de.itagile.api;
 
 import de.itagile.despot.Despot;
+import de.itagile.despot.http.StatusModifier;
 import de.itagile.despot.Verifier;
 import de.itagile.mediatype.simpleJson.JsonMediaType;
 import de.itagile.mediatype.MediaTypeTest;
@@ -24,10 +25,12 @@ import static de.itagile.api.RedirectToFirstPageFull.redirect_to_first_page_full
 import static de.itagile.api.WriteErrorMsg.write_error_msg;
 import static de.itagile.despot.Despot.despot;
 import static de.itagile.despot.Despot.pre;
-import static de.itagile.despot.StatusModifier.status;
+import static de.itagile.despot.http.MaxAgeModifier.maxAge;
+import static de.itagile.despot.http.StatusModifier.status;
 import static de.itagile.specification.Operations.operations;
 import static de.itagile.specification.SpecificationPartial.not;
 import static de.itagile.util.CollectionUtil.mapOf;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -44,7 +47,7 @@ public class ApiTest {
                         write_error_msg(), status(404), MediaTypeTest.ERROR_MEDIA_TYPE).
                 next(
                         OPS.and(is_invalid_uri(), is_manual_redirect_possible()),
-                        manual_redirect(), status(301)).
+                        manual_redirect(), status(301), maxAge(5, SECONDS)).
                 next(
                         pre(not(is_partial_menu())).
                                 next(
@@ -82,7 +85,7 @@ public class ApiTest {
                         is_invalid_page(),
                         redirect_to_first_page(), status(301));
 
-        verify(verifier).add(mapOf("status_code", 301L));
+        verify(verifier).add(mapOf(StatusModifier.KEY, 301L));
     }
 
     @Test
@@ -93,7 +96,7 @@ public class ApiTest {
                         redirect_to_first_page(), status(200), new JsonMediaType("test-mediatype") {
                         });
 
-        verify(verifier).add(mapOf("status_code", 200L, "produces", mapOf("name", "test-mediatype", "fields", new HashSet<>())));
+        verify(verifier).add(mapOf(StatusModifier.KEY, 200L, "produces", mapOf("name", "test-mediatype", "fields", new HashSet<>())));
     }
 
     @Test
@@ -106,7 +109,7 @@ public class ApiTest {
                                         full_response(), status(503), new JsonMediaType("error") {
                                         }));
 
-        verify(verifier).add(mapOf("status_code", 503L, "produces", mapOf("name", "error", "fields", new HashSet<>())));
+        verify(verifier).add(mapOf(StatusModifier.KEY, 503L, "produces", mapOf("name", "error", "fields", new HashSet<>())));
     }
 
 }
