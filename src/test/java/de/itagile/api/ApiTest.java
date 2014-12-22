@@ -1,9 +1,6 @@
 package de.itagile.api;
 
-import de.itagile.despot.Despot;
-import de.itagile.despot.DespotResponse;
-import de.itagile.despot.ResponsePartial;
-import de.itagile.despot.Verifier;
+import de.itagile.despot.*;
 import de.itagile.despot.http.StatusModifier;
 import de.itagile.mediatype.MediaTypeTest;
 import de.itagile.mediatype.simpleJson.JsonMediaType;
@@ -128,12 +125,12 @@ public class ApiTest {
 
     private class RedirectExceptionThrowingResponse extends ResponsePartial<IProductSearchParams> {
         @Override
-        public DespotResponse create(IProductSearchParams param) {
+        public ResponseModifier create(IProductSearchParams param) {
             return this;
         }
 
         @Override
-        public Model responseModel() throws Exception {
+        public void modify(Response.ResponseBuilder responseBuilder, Model model) throws Exception {
             throw new RedirectException();
         }
     }

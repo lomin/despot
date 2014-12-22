@@ -26,9 +26,9 @@ public class DespotVerifierTest {
 
         verifier.add(mapOf("test1", "test2"));
 
-        DespotVerifier.Verifaction verifaction = verifier.verify(setOf(mapOf("A", "B"), mapOf("test1", "test2")));
-        assertFalse(verifaction.verified());
-        assertEquals(DespotVerifier.UnreachableRoutesException.class, verifaction.exception().getClass());
+        Verification verification = verifier.verify(setOf(mapOf("A", "B"), mapOf("test1", "test2")));
+        assertFalse(verification.verified());
+        assertEquals(DespotVerifier.UnreachableRoutesException.class, verification.exception().getClass());
     }
 
     @Test
@@ -39,9 +39,9 @@ public class DespotVerifierTest {
 
         assertFalse(verifier.verify(setOf(mapOf("A", "B"), mapOf("C", "D"))).verified());
         assertFalse(verifier.verify(setOf(mapOf("test1", "test3"))).verified());
-        DespotVerifier.Verifaction verifaction = verifier.verify(setOf(mapOf("test3", "test2")));
-        assertFalse(verifaction.verified());
-        assertEquals(DespotVerifier.UnknownRoutesException.class, verifaction.exception().getClass());
+        Verification verification = verifier.verify(setOf(mapOf("test3", "test2")));
+        assertFalse(verification.verified());
+        assertEquals(DespotVerifier.UnknownRoutesException.class, verification.exception().getClass());
     }
 
 }

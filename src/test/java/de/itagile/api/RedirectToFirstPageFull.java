@@ -1,9 +1,7 @@
 package de.itagile.api;
 
-import de.itagile.despot.DespotResponse;
+import de.itagile.despot.ResponseModifier;
 import de.itagile.despot.ResponsePartial;
-
-import javax.ws.rs.core.Response;
 
 public class RedirectToFirstPageFull extends ResponsePartial<IProductSearchParams> {
     private RedirectToFirstPageFull() {
@@ -14,7 +12,7 @@ public class RedirectToFirstPageFull extends ResponsePartial<IProductSearchParam
     }
 
     @Override
-    public DespotResponse create(IProductSearchParams param) {
+    public ResponseModifier create(IProductSearchParams param) {
         return redirect_to_first_page_full();
     }
 }

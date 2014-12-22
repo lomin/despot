@@ -1,6 +1,5 @@
 package de.itagile.mediatype;
 
-import de.itagile.despot.DespotResponse;
 import de.itagile.despot.DespotSpecParser;
 import de.itagile.despot.EntityFactory;
 import de.itagile.despot.ResponseModifier;
@@ -80,10 +79,9 @@ public class MediaType<T, FormatType extends Format<T>> implements Iterable<Form
     }
 
     @Override
-    public DespotResponse modify(Response.ResponseBuilder responseBuilder, DespotResponse despotResponse) throws Exception {
-        T entity = modify(despotResponse.responseModel());
+    public void modify(Response.ResponseBuilder responseBuilder, Model model) throws Exception {
+        T entity = modify(model);
         responseBuilder.entity(entity);
-        return despotResponse;
     }
 
     @Override

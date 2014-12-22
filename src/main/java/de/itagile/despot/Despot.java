@@ -87,16 +87,17 @@ public class Despot<ParamType> {
     }
 
     public Response response(ParamType param) {
+        HashModel model = new HashModel();
         for (DespotRoute route : routes) {
             try {
                 Specification specification = route.specification.create(param);
                 if (specification.isTrue()) {
-                    return buildResponse(route, param);
+                    return buildResponse(route, param, model);
                 }
             } catch (Exception e) {
                 for (ErrorResponse errorResponse : errorResponses) {
                     if (errorResponse.exception.isAssignableFrom(e.getClass())) {
-                        return buildErrorResponse(errorResponse);
+                        return buildErrorResponse(errorResponse, model);
                     }
                 }
                 throw new RuntimeException(e);
@@ -105,12 +106,11 @@ public class Despot<ParamType> {
         throw new IllegalStateException("No route matched and no fallback defined.");
     }
 
-    private Response buildErrorResponse(ErrorResponse errorResponse) {
+    private Response buildErrorResponse(ErrorResponse errorResponse, Model model) {
         Response.ResponseBuilder responseBuilder = Response.noContent();
-        DespotResponse response = new EmptyResponse();
         for (ResponseModifier modifier : errorResponse.responseModifiers) {
             try {
-                response = modifier.modify(responseBuilder, response);
+                modifier.modify(responseBuilder, model);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -118,12 +118,12 @@ public class Despot<ParamType> {
         return responseBuilder.build();
     }
 
-    private Response buildResponse(DespotRoute element, ParamType param) throws Exception {
+    private Response buildResponse(DespotRoute element, ParamType param, HashModel model) throws Exception {
         Response.ResponseBuilder responseBuilder = Response.noContent();
-        DespotResponse response = element.response.create(param);
-        response = response.modify(responseBuilder, response);
+        ResponseModifier response = element.response.create(param);
+        response.modify(responseBuilder, model);
         for (ResponseModifier modifier : element.modifiers) {
-            response = modifier.modify(responseBuilder, response);
+            modifier.modify(responseBuilder, model);
         }
         return responseBuilder.build();
     }
@@ -141,11 +141,11 @@ public class Despot<ParamType> {
     }
 
     public Despot<ParamType> verify(Set<Map<String, Object>> canonicalSpec) {
-        DespotVerifier.Verifaction verifaction = verifier.verify(canonicalSpec);
-        if (verifaction.verified()) {
+        Verification verification = verifier.verify(canonicalSpec);
+        if (verification.verified()) {
             return this;
         }
-        throw verifaction.exception();
+        throw verification.exception();
     }
 
     public static enum Method {
@@ -164,23 +164,6 @@ public class Despot<ParamType> {
         public PreDespot<ParamType> next(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, ResponseModifier... responseModifiers) {
             super.next(SpecificationPartial.and(s, specification, null), option, responseModifiers);
             return this;
-        }
-    }
-
-    private static class EmptyResponse implements DespotResponse {
-        @Override
-        public Model responseModel() {
-            return new HashModel();
-        }
-
-        @Override
-        public DespotResponse modify(Response.ResponseBuilder responseBuilder, DespotResponse despotResponse) {
-            return despotResponse;
-        }
-
-        @Override
-        public void spec(Map<String, Object> spec) {
-
         }
     }
 

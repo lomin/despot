@@ -1,7 +1,7 @@
 package de.itagile.despot.http;
 
-import de.itagile.despot.DespotResponse;
 import de.itagile.despot.ResponseModifier;
+import de.itagile.model.Model;
 
 import javax.ws.rs.core.Response;
 import java.util.Map;
@@ -24,9 +24,8 @@ public class StatusModifier implements ResponseModifier {
     }
 
     @Override
-    public DespotResponse modify(Response.ResponseBuilder responseBuilder, DespotResponse despotResponse) {
+    public void modify(Response.ResponseBuilder responseBuilder, Model model) {
         responseBuilder.status(status);
-        return despotResponse;
     }
 
     @Override

@@ -1,8 +1,8 @@
 package de.itagile.despot.http;
 
-import de.itagile.despot.DespotResponse;
 import de.itagile.despot.ResponseModifier;
 import de.itagile.model.Key;
+import de.itagile.model.Model;
 
 import javax.ws.rs.core.Response;
 import java.net.URI;
@@ -33,10 +33,9 @@ public class LocationModifier implements ResponseModifier {
     }
 
     @Override
-    public DespotResponse modify(Response.ResponseBuilder responseBuilder, DespotResponse despotResponse) throws Exception {
-        String location = despotResponse.responseModel().get(KEY);
+    public void modify(Response.ResponseBuilder responseBuilder, Model model) throws Exception {
+        String location = model.get(KEY);
         responseBuilder.location(URI.create(locationTemplate.replaceAll(var, location)));
-        return despotResponse;
     }
 
     @Override

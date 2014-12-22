@@ -13,7 +13,7 @@ public class DespotVerifier implements Verifier {
     }
 
     @Override
-    public Verifaction verify(final Set<Map<String, Object>> canonicalSpec) {
+    public Verification verify(final Set<Map<String, Object>> canonicalSpec) {
         final Set<Map<String, Object>> specsCopy = new HashSet<>(specs);
         specsCopy.removeAll(canonicalSpec);
         if (!specsCopy.isEmpty()) {
@@ -26,12 +26,7 @@ public class DespotVerifier implements Verifier {
         return new Verified();
     }
 
-    public static interface Verifaction {
-        boolean verified();
-        RuntimeException exception();
-    }
-
-    private static class Verified implements Verifaction {
+    private static class Verified implements Verification {
         @Override
         public boolean verified() {
             return true;
@@ -43,7 +38,7 @@ public class DespotVerifier implements Verifier {
         }
     }
 
-    private static class UnknownRoutes implements Verifaction {
+    private static class UnknownRoutes implements Verification {
         private final Set<Map<String, Object>> specsCopy;
         private final Set<Map<String, Object>> canonicalSpec;
 
@@ -63,7 +58,21 @@ public class DespotVerifier implements Verifier {
         }
     }
 
-    private class UnreachableRoutes implements Verifaction {
+    public static class UnreachableRoutesException extends RuntimeException {
+
+        public UnreachableRoutesException(String message) {
+            super(message);
+        }
+    }
+
+    public static class UnknownRoutesException extends RuntimeException {
+
+        public UnknownRoutesException(String message) {
+            super(message);
+        }
+    }
+
+    private class UnreachableRoutes implements Verification {
         private final Set<Map<String, Object>> canonicalSpec;
 
         public UnreachableRoutes(Set<Map<String, Object>> canonicalSpec) {
@@ -78,20 +87,6 @@ public class DespotVerifier implements Verifier {
         @Override
         public RuntimeException exception() {
             return new UnreachableRoutesException("Unreachable routes:\n" + canonicalSpec + "\ncannot be fulfilled by routes:\n" + specs);
-        }
-    }
-
-    public static class UnreachableRoutesException extends RuntimeException {
-
-        public UnreachableRoutesException(String message) {
-            super(message);
-        }
-    }
-
-    public static class UnknownRoutesException extends RuntimeException {
-
-        public UnknownRoutesException(String message) {
-            super(message);
         }
     }
 }

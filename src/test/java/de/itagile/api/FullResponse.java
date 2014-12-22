@@ -1,9 +1,8 @@
 package de.itagile.api;
 
-import de.itagile.despot.DespotResponse;
+import de.itagile.despot.ResponseModifier;
 import de.itagile.despot.ResponsePartial;
 import de.itagile.mediatype.MediaTypeTest;
-import de.itagile.model.HashModel;
 import de.itagile.model.Model;
 
 import javax.ws.rs.core.Response;
@@ -20,22 +19,15 @@ public class FullResponse extends ResponsePartial<FullResponse.IFullResponsePara
     }
 
     @Override
-    public DespotResponse create(IFullResponseParams param) {
+    public ResponseModifier create(IFullResponseParams param) {
         return new FullResponse(param);
     }
 
     @Override
-    public DespotResponse modify(Response.ResponseBuilder responseBuilder, DespotResponse despotResponse) {
+    public void modify(Response.ResponseBuilder responseBuilder, Model model) {
         responseBuilder.header("tracking-header", "tracking-value");
-        return despotResponse;
-    }
-
-    @Override
-    public Model responseModel() {
-        Model e = new HashModel();
-        e.update(MediaTypeTest.PRODUCT_ID_FIELD, param.getProductId());
-        e.update(MediaTypeTest.TEMPLATE_NAME_FIELD, "/path/to/testTemplate");
-        return e;
+        model.update(MediaTypeTest.PRODUCT_ID_FIELD, param.getProductId());
+        model.update(MediaTypeTest.TEMPLATE_NAME_FIELD, "/path/to/testTemplate");
     }
 
     public static interface IFullResponseParams {
