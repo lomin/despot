@@ -39,6 +39,8 @@ public class MediaTypeTest {
     public static final TemplateField TEMPLATE_NAME_FIELD = new TemplateField();
     public static final HtmlModelField TEMPLATE_MODEL_FIELD = new HtmlModelField(set(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD));
     public static final MediaType<Viewable, HtmlFormat> HTML_MEDIA_TYPE = new MediaType<Viewable, HtmlFormat>("application/vnd.itagile.product+html", VIEWABLE_ENTITY_FACTORY, TEMPLATE_NAME_FIELD, TEMPLATE_MODEL_FIELD);
+    public static final StringField REASON_FIELD = new StringField("reason");
+    public static final JsonMediaType ERROR_MEDIA_TYPE = new JsonMediaType("application/vnd.itagile.error+json", REASON_FIELD);
 
     private static <T> Set<T> set(T... keys) {
         Set<T> result = new HashSet<T>();
@@ -144,7 +146,7 @@ public class MediaTypeTest {
         }
     }
 
-    public static abstract class JsonMediaType extends MediaType<JSONObject, JsonFormat> {
+    public static class JsonMediaType extends MediaType<JSONObject, JsonFormat> {
         public JsonMediaType(String name, JsonFormat... jsonFormats) {
             super(name, new EntityFactory<JSONObject>() {
                 @Override

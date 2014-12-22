@@ -20,6 +20,7 @@ import static de.itagile.api.IsResultOk.is_result_ok;
 import static de.itagile.api.ManualRedirect.manual_redirect;
 import static de.itagile.api.RedirectToFirstPage.redirect_to_first_page;
 import static de.itagile.api.RedirectToFirstPageFull.redirect_to_first_page_full;
+import static de.itagile.api.WriteErrorMsg.write_error_msg;
 import static de.itagile.despot.Despot.despot;
 import static de.itagile.despot.Despot.pre;
 import static de.itagile.despot.StatusModifier.status;
@@ -39,7 +40,7 @@ public class ApiTest {
         return despot("/items/{path}", Despot.Method.GET, IProductSearchParams.class).
                 next(
                         is_invalid_page(),
-                        redirect_to_first_page(), status(301)).
+                        write_error_msg(), status(404), MediaTypeTest.ERROR_MEDIA_TYPE).
                 next(
                         OPS.and(is_invalid_uri(), is_manual_redirect_possible()),
                         manual_redirect(), status(301)).
@@ -91,7 +92,7 @@ public class ApiTest {
                         redirect_to_first_page(), status(200), new MediaTypeTest.JsonMediaType("test-mediatype") {
                         });
 
-        verify(verifier).add(mapOf("status_code", 200L, "mediatype", mapOf("name", "test-mediatype", "fields", new HashSet<>())));
+        verify(verifier).add(mapOf("status_code", 200L, "produces", mapOf("name", "test-mediatype", "fields", new HashSet<>())));
     }
 
     @Test
@@ -104,7 +105,7 @@ public class ApiTest {
                                         full_response(), status(503), new MediaTypeTest.JsonMediaType("error") {
                                         }));
 
-        verify(verifier).add(mapOf("status_code", 503L, "mediatype", mapOf("name", "error", "fields", new HashSet<>())));
+        verify(verifier).add(mapOf("status_code", 503L, "produces", mapOf("name", "error", "fields", new HashSet<>())));
     }
 
 }

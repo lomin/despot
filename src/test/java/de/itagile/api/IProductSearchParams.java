@@ -6,5 +6,6 @@ public interface IProductSearchParams
         IsManualRedirectPossible.IIsManualRedirectPossible,
         ManualRedirect.IManualRedirect,
         IsInvalidPage.Pageable,
-        FullResponse.IFullResponseParams {
+        FullResponse.IFullResponseParams,
+        WriteErrorMsg.IErrorMsg {
 }

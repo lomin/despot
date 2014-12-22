@@ -14,7 +14,7 @@ public class DespotSpecParser {
     public static final String METHODS = "methods";
     public static final String METHOD = "method";
     public static final String STATUS_CODE = "status_code";
-    public static final String MEDIATYPE = "mediatype";
+    public static final String MEDIATYPE = "produces";
     public static final String URI = "uri";
     public static final String ENDPOINTS = "endpoints";
     public static final String ALL_MEDIATYPES = "media_types";
@@ -43,14 +43,17 @@ public class DespotSpecParser {
 
     private void expandFields(Map<String, Object> mediaType, Map completeSpec) {
         Set expandedFields = new HashSet<>();
-        Iterable<String> myFields = (Iterable<String>) mediaType.get(FIELDS);
+        Iterable<Object> myFields = (Iterable<Object>) mediaType.get(FIELDS);
         Iterable<Map<String, Object>> fields = (Iterable<Map<String, Object>>) completeSpec.get(FIELDS);
-        for (String myField : myFields) {
+        for (Object myField : myFields) {
+            if (!(myField instanceof String)) {
+                expandedFields.add(myField);
+            } else {
             for (Map<String, Object> field : fields) {
                 if (field.get("name").equals(myField)) {
                     expandedFields.add(new HashMap(field));
                 }
-            }
+            }}
         }
         mediaType.put(FIELDS, expandedFields);
     }
