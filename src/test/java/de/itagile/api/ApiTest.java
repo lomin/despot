@@ -2,6 +2,7 @@ package de.itagile.api;
 
 import de.itagile.despot.Despot;
 import de.itagile.despot.Verifier;
+import de.itagile.mediatype.simpleJson.JsonMediaType;
 import de.itagile.mediatype.MediaTypeTest;
 import de.itagile.specification.Operations;
 import org.junit.Test;
@@ -89,7 +90,7 @@ public class ApiTest {
         new Despot<IProductSearchParams>(verifier, "/items/{path}", Despot.Method.GET).
                 next(
                         is_invalid_page(),
-                        redirect_to_first_page(), status(200), new MediaTypeTest.JsonMediaType("test-mediatype") {
+                        redirect_to_first_page(), status(200), new JsonMediaType("test-mediatype") {
                         });
 
         verify(verifier).add(mapOf("status_code", 200L, "produces", mapOf("name", "test-mediatype", "fields", new HashSet<>())));
@@ -102,7 +103,7 @@ public class ApiTest {
                         pre(not(is_partial_menu())).
                                 next(
                                         is_result_ok(),
-                                        full_response(), status(503), new MediaTypeTest.JsonMediaType("error") {
+                                        full_response(), status(503), new JsonMediaType("error") {
                                         }));
 
         verify(verifier).add(mapOf("status_code", 503L, "produces", mapOf("name", "error", "fields", new HashSet<>())));

@@ -1,10 +1,6 @@
 package de.itagile.mediatype;
 
-import de.itagile.despot.EntityFactory;
-import de.itagile.mediatype.html.HtmlFormat;
-import de.itagile.mediatype.html.HtmlModelField;
-import de.itagile.mediatype.html.TemplateField;
-import de.itagile.mediatype.html.Viewable;
+import de.itagile.mediatype.html.*;
 import de.itagile.mediatype.simpleJson.*;
 import de.itagile.model.HashModel;
 import de.itagile.model.Model;
@@ -17,12 +13,6 @@ import static org.junit.Assert.assertEquals;
 
 public class MediaTypeTest {
 
-    public static final EntityFactory<Viewable> VIEWABLE_ENTITY_FACTORY = new EntityFactory<Viewable>() {
-        @Override
-        public Viewable create() {
-            return new Viewable();
-        }
-    };
     public static final IntegerField PRICE_FIELD = new IntegerField("price");
     public static final RequiredStringField<String> PRODUCT_ID_FIELD = new RequiredStringField<>("productId");
     public static final Set<Availability> AVAILABILITIES = set(Availability.AVAILABLE, Availability.DELAYED, Availability.SOLDOUT);
@@ -38,7 +28,7 @@ public class MediaTypeTest {
     public static final JsonMediaType PRODUCT_MEDIA_TYPE = new ProductMediaType(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD, VARIATIONS_FIELD);
     public static final TemplateField TEMPLATE_NAME_FIELD = new TemplateField();
     public static final HtmlModelField TEMPLATE_MODEL_FIELD = new HtmlModelField(set(PRODUCT_ID_FIELD, PRODUCT_NAME_FIELD));
-    public static final MediaType<Viewable, HtmlFormat> HTML_MEDIA_TYPE = new MediaType<Viewable, HtmlFormat>("application/vnd.itagile.product+html", VIEWABLE_ENTITY_FACTORY, TEMPLATE_NAME_FIELD, TEMPLATE_MODEL_FIELD);
+    public static final MediaType<Viewable, HtmlFormat> HTML_MEDIA_TYPE = new HtmlMediaType("application/vnd.itagile.product+html", TEMPLATE_NAME_FIELD, TEMPLATE_MODEL_FIELD);
     public static final StringField REASON_FIELD = new StringField("reason");
     public static final JsonMediaType ERROR_MEDIA_TYPE = new JsonMediaType("application/vnd.itagile.error+json", REASON_FIELD);
 
@@ -134,6 +124,10 @@ public class MediaTypeTest {
 
     }
 
+    public static enum Availability {
+        AVAILABLE, DELAYED, SOLDOUT, FORBIDDEN
+    }
+
     public static class VariationMediaType extends JsonMediaType {
         public VariationMediaType(JsonFormat... jsonFormats) {
             super("application/vnd.itagile.variation+json", jsonFormats);
@@ -143,17 +137,6 @@ public class MediaTypeTest {
     public static class ProductMediaType extends JsonMediaType {
         public ProductMediaType(JsonFormat... jsonFormats) {
             super("application/vnd.itagile.product+json", jsonFormats);
-        }
-    }
-
-    public static class JsonMediaType extends MediaType<JSONObject, JsonFormat> {
-        public JsonMediaType(String name, JsonFormat... jsonFormats) {
-            super(name, new EntityFactory<JSONObject>() {
-                @Override
-                public JSONObject create() {
-                    return new JSONObject();
-                }
-            }, jsonFormats);
         }
     }
 }
