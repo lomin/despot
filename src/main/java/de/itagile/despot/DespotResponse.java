@@ -4,5 +4,5 @@ import de.itagile.model.Model;
 
 public interface DespotResponse extends ResponseModifier {
 
-    Model responseModel();
+    Model responseModel() throws Exception;
 }

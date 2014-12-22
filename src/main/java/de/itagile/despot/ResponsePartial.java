@@ -9,12 +9,12 @@ import java.util.Map;
 public abstract class ResponsePartial<ParamType> implements Completable<ParamType, DespotResponse>, DespotResponse {
 
     @Override
-    public Model responseModel() {
+    public Model responseModel() throws Exception {
         return new HashModel();
     }
 
     @Override
-    public DespotResponse modify(Response.ResponseBuilder responseBuilder, DespotResponse despotResponse) {
+    public DespotResponse modify(Response.ResponseBuilder responseBuilder, DespotResponse despotResponse) throws Exception{
         return despotResponse;
     }
 

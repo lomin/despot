@@ -1,10 +1,13 @@
 package de.itagile.api;
 
 import de.itagile.despot.Despot;
-import de.itagile.despot.http.StatusModifier;
+import de.itagile.despot.DespotResponse;
+import de.itagile.despot.ResponsePartial;
 import de.itagile.despot.Verifier;
-import de.itagile.mediatype.simpleJson.JsonMediaType;
+import de.itagile.despot.http.StatusModifier;
 import de.itagile.mediatype.MediaTypeTest;
+import de.itagile.mediatype.simpleJson.JsonMediaType;
+import de.itagile.model.Model;
 import de.itagile.specification.Operations;
 import org.junit.Test;
 
@@ -28,6 +31,7 @@ import static de.itagile.despot.Despot.pre;
 import static de.itagile.despot.http.MaxAgeModifier.maxAge;
 import static de.itagile.despot.http.StatusModifier.status;
 import static de.itagile.specification.Operations.operations;
+import static de.itagile.specification.SpecificationPartial.TRUE;
 import static de.itagile.specification.SpecificationPartial.not;
 import static de.itagile.util.CollectionUtil.mapOf;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -57,7 +61,7 @@ public class ApiTest {
                                         is_result_ok(),
                                         full_response(), status(200), MediaTypeTest.PRODUCT_MEDIA_TYPE)).
                 last(redirect_to_first_page(), status(301)).
-                error(RedirectException.class, MediaTypeTest.HTML_MEDIA_TYPE)
+                error(RedirectException.class, status(503))
                 .verify("/de.itagile.spec/spec.json");
     }
 
@@ -93,8 +97,7 @@ public class ApiTest {
         new Despot<IProductSearchParams>(verifier, "/items/{path}", Despot.Method.GET).
                 next(
                         is_invalid_page(),
-                        redirect_to_first_page(), status(200), new JsonMediaType("test-mediatype") {
-                        });
+                        redirect_to_first_page(), status(200), new JsonMediaType("test-mediatype"));
 
         verify(verifier).add(mapOf(StatusModifier.KEY, 200L, "produces", mapOf("name", "test-mediatype", "fields", new HashSet<>())));
     }
@@ -106,10 +109,32 @@ public class ApiTest {
                         pre(not(is_partial_menu())).
                                 next(
                                         is_result_ok(),
-                                        full_response(), status(503), new JsonMediaType("error") {
-                                        }));
+                                        full_response(), status(503), new JsonMediaType("error")));
 
         verify(verifier).add(mapOf(StatusModifier.KEY, 503L, "produces", mapOf("name", "error", "fields", new HashSet<>())));
     }
 
+    @Test
+    public void handlesExceptionsWithinDespotExecution() throws Exception {
+        Response response = new Despot<IProductSearchParams>(verifier, "/items/{path}", Despot.Method.GET)
+                .next(
+                        TRUE(IProductSearchParams.class),
+                        new RedirectExceptionThrowingResponse(), status(200), new JsonMediaType("ignore"))
+                .error(RedirectException.class, status(503))
+                .response(new ProductSearchParams());
+
+        assertEquals(503, response.getStatus());
+    }
+
+    private class RedirectExceptionThrowingResponse extends ResponsePartial<IProductSearchParams> {
+        @Override
+        public DespotResponse create(IProductSearchParams param) {
+            return this;
+        }
+
+        @Override
+        public Model responseModel() throws Exception {
+            throw new RedirectException();
+        }
+    }
 }

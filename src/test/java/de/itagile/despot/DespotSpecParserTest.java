@@ -18,7 +18,7 @@ public class DespotSpecParserTest {
     public void returnsAllResponseCombinationIfEndpointAndMethodMatches() throws Exception {
         Set<Map<String, Object>> spec = parser.getSpec(Despot.Method.GET, "/items/{path}", getStream());
 
-        assertEquals(4, spec.size());
+        assertEquals(5, spec.size());
     }
 
     @Test

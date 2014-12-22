@@ -80,7 +80,7 @@ public class MediaType<T, FormatType extends Format<T>> implements Iterable<Form
     }
 
     @Override
-    public DespotResponse modify(Response.ResponseBuilder responseBuilder, DespotResponse despotResponse) {
+    public DespotResponse modify(Response.ResponseBuilder responseBuilder, DespotResponse despotResponse) throws Exception {
         T entity = modify(despotResponse.responseModel());
         responseBuilder.entity(entity);
         return despotResponse;

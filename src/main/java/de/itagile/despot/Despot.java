@@ -1,5 +1,7 @@
 package de.itagile.despot;
 
+import de.itagile.model.HashModel;
+import de.itagile.model.Model;
 import de.itagile.specification.Specification;
 import de.itagile.specification.SpecificationPartial;
 import org.json.simple.parser.ParseException;
@@ -11,11 +13,11 @@ import java.util.*;
 public class Despot<ParamType> {
 
     private final List<DespotRoute> routes = new ArrayList<>();
-    private final Set<Map> routesSpecs = new HashSet<>();
     private final Verifier verifier;
     private String endpoint = "/";
     private Method method = Method.GET;
     private DespotSpecParser specParser = new DespotSpecParser();
+    private List<ErrorResponse> errorResponses = new ArrayList<>();
 
     public Despot(Verifier verifier, String uri, Method method) {
         this.verifier = verifier;
@@ -39,14 +41,17 @@ public class Despot<ParamType> {
     }
 
     private Despot<ParamType> addRoute(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, List<ResponseModifier> modifiers) {
+        addSpec(modifiers);
+        this.routes.add(new DespotRoute(specification, option, modifiers));
+        return this;
+    }
+
+    private void addSpec(Iterable<ResponseModifier> modifiers) {
         Map<String, Object> spec = new HashMap<>();
         for (ResponseModifier modifier : modifiers) {
             modifier.spec(spec);
         }
-        this.routesSpecs.add(spec);
         this.verifier.add(spec);
-        this.routes.add(new DespotRoute(specification, option, modifiers));
-        return this;
     }
 
     public Despot<ParamType> next(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, ResponseModifier... responseModifiers) {
@@ -74,21 +79,46 @@ public class Despot<ParamType> {
         }, option, Arrays.asList(responseModifiers));
     }
 
-    public Despot<ParamType> error(Class<? extends Exception> exception, ResponseModifier... responseModifiers) {
+    public Despot<ParamType> error(Class<? extends Exception> exception, ResponseModifier... modifiers) {
+        List<ResponseModifier> responseModifiers = Arrays.asList(modifiers);
+        addSpec(responseModifiers);
+        this.errorResponses.add(new ErrorResponse(exception, responseModifiers));
         return this;
     }
 
     public Response response(ParamType param) {
         for (DespotRoute route : routes) {
-            Specification specification = route.specification.create(param);
-            if (specification.isTrue()) {
-                return buildResponse(route, param);
+            try {
+                Specification specification = route.specification.create(param);
+                if (specification.isTrue()) {
+                    return buildResponse(route, param);
+                }
+            } catch (Exception e) {
+                for (ErrorResponse errorResponse : errorResponses) {
+                    if (errorResponse.exception.isAssignableFrom(e.getClass())) {
+                        return buildErrorResponse(errorResponse);
+                    }
+                }
+                throw new RuntimeException(e);
             }
         }
         throw new IllegalStateException("No route matched and no fallback defined.");
     }
 
-    private Response buildResponse(DespotRoute element, ParamType param) {
+    private Response buildErrorResponse(ErrorResponse errorResponse) {
+        Response.ResponseBuilder responseBuilder = Response.noContent();
+        DespotResponse response = new EmptyResponse();
+        for (ResponseModifier modifier : errorResponse.responseModifiers) {
+            try {
+                response = modifier.modify(responseBuilder, response);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return responseBuilder.build();
+    }
+
+    private Response buildResponse(DespotRoute element, ParamType param) throws Exception {
         Response.ResponseBuilder responseBuilder = Response.noContent();
         DespotResponse response = element.response.create(param);
         response = response.modify(responseBuilder, response);
@@ -134,6 +164,34 @@ public class Despot<ParamType> {
         public PreDespot<ParamType> next(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, ResponseModifier... responseModifiers) {
             super.next(SpecificationPartial.and(s, specification, null), option, responseModifiers);
             return this;
+        }
+    }
+
+    private static class EmptyResponse implements DespotResponse {
+        @Override
+        public Model responseModel() {
+            return new HashModel();
+        }
+
+        @Override
+        public DespotResponse modify(Response.ResponseBuilder responseBuilder, DespotResponse despotResponse) {
+            return despotResponse;
+        }
+
+        @Override
+        public void spec(Map<String, Object> spec) {
+
+        }
+    }
+
+    private class ErrorResponse {
+
+        private final Class<? extends Exception> exception;
+        private final List<ResponseModifier> responseModifiers;
+
+        public ErrorResponse(Class<? extends Exception> exception, List<ResponseModifier> responseModifiers) {
+            this.exception = exception;
+            this.responseModifiers = responseModifiers;
         }
     }
 

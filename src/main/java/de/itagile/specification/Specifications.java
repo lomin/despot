@@ -12,7 +12,7 @@ public class Specifications {
     public static Specification not(final Specification spec) {
         return new Specification() {
             @Override
-            public boolean isTrue() {
+            public boolean isTrue() throws Exception {
                 return !spec.isTrue();
             }
         };
@@ -21,7 +21,7 @@ public class Specifications {
     public static Specification and(final Specification first, final Specification second) {
         return new Specification() {
             @Override
-            public boolean isTrue() {
+            public boolean isTrue() throws Exception {
                 return first.isTrue() && second.isTrue();
             }
         };
@@ -30,7 +30,7 @@ public class Specifications {
     public static Specification or(final Specification first, final Specification second) {
         return new Specification() {
             @Override
-            public boolean isTrue() {
+            public boolean isTrue() throws Exception {
                 return first.isTrue() || second.isTrue();
             }
         };
