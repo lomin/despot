@@ -22,4 +22,18 @@ public class Operations<ParamType> {
             }
         };
     }
+
+    public SpecificationPartial<? super ParamType> or(final SpecificationPartial<? super ParamType> first, final SpecificationPartial<? super ParamType> second) {
+        return new SpecificationPartial<ParamType>() {
+            @Override
+            public Specification create(ParamType param) {
+                return Specifications.or(first.create(param), second.create(param));
+            }
+
+            @Override
+            public boolean isTrue() {
+                throw new IllegalStateException();
+            }
+        };
+    }
 }
