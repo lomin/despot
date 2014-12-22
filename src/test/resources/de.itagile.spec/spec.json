@@ -8,10 +8,12 @@
           "responses": [
             {
               "status-code": 200,
-              "produces": "application/vnd.itagile.product+json"
+              "produces": "application/vnd.itagile.product+json",
+              "__description__": "Returns a single product."
             },
             {
-              "status-code": 301
+              "status-code": 301,
+              "__description__": "Uncached Redirect."
             },
             {
               "status-code": 301,

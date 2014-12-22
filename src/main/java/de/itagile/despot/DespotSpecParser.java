@@ -48,11 +48,12 @@ public class DespotSpecParser {
             if (!(myField instanceof String)) {
                 expandedFields.add(myField);
             } else {
-            for (Map<String, Object> field : fields) {
-                if (field.get("name").equals(myField)) {
-                    expandedFields.add(new HashMap(field));
+                for (Map<String, Object> field : fields) {
+                    if (field.get("name").equals(myField)) {
+                        expandedFields.add(new HashMap(field));
+                    }
                 }
-            }}
+            }
         }
         mediaType.put(FIELDS, expandedFields);
     }
@@ -84,10 +85,16 @@ public class DespotSpecParser {
     }
 
     private void visitAllResponses(Map methodMap, Set<Map<String, Object>> result) {
-        List allStatusCodes = (List) methodMap.get(RESPONSES);
-        for (Object element : allStatusCodes) {
-            result.add((Map) element);
-
+        List allResponses = (List) methodMap.get(RESPONSES);
+        for (Object response : allResponses) {
+            Map responseMap = (Map) response;
+            Iterator responseMapIterator = responseMap.keySet().iterator();
+            while (responseMapIterator.hasNext()) {
+                if (responseMapIterator.next().toString().equals("__description__")) {
+                    responseMapIterator.remove();
+                }
+            }
+            result.add(responseMap);
         }
     }
 
