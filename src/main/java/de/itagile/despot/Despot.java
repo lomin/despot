@@ -8,7 +8,7 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.*;
 
-public class Despot<ParamType> implements Verifiable {
+public class Despot<ParamType> {
 
     private final List<DespotRoute> routes = new ArrayList<>();
     private final Set<Map> routesSpecs = new HashSet<>();
