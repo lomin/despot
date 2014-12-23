@@ -6,7 +6,6 @@ import de.itagile.model.Model;
 
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
 
@@ -25,8 +24,8 @@ public class LocationModifier implements ResponseModifier {
         this.vars = vars;
     }
 
-    public static ResponseModifier location(final String status, String var) {
-        return new LocationModifier(status, var);
+    public static ResponseModifier location(final String locationTemplate, String... vars) {
+        return new LocationModifier(locationTemplate, vars);
     }
 
     @Override
