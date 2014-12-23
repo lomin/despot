@@ -2,6 +2,7 @@ package de.itagile.despot;
 
 import de.itagile.despot.http.MethodSpecified;
 import de.itagile.model.HashModel;
+import de.itagile.model.Key;
 import de.itagile.model.Model;
 import de.itagile.specification.Specification;
 import de.itagile.specification.SpecificationPartial;
@@ -13,6 +14,12 @@ import java.util.*;
 
 public class Despot<ParamType> {
 
+    private static final Key<Exception> LAST_EXCEPTION = new Key<Exception>() {
+        @Override
+        public Exception getUndefined() {
+            return new Exception();
+        }
+    };
     private final List<DespotRoute> routes = new ArrayList<>();
     private final Verifier verifier;
     private List<Specified> additionalSpecifications = new ArrayList<>();
@@ -106,6 +113,7 @@ public class Despot<ParamType> {
                     return buildResponse(route, param, model);
                 }
             } catch (Exception e) {
+                model.update(LAST_EXCEPTION, e);
                 for (ErrorResponse errorResponse : errorResponses) {
                     if (errorResponse.exception.isAssignableFrom(e.getClass())) {
                         return errorResponse.buildResponse(model, param);
@@ -115,18 +123,6 @@ public class Despot<ParamType> {
             }
         }
         throw new IllegalStateException("No route matched and no fallback defined.");
-    }
-
-    private Response buildErrorResponse(ErrorResponse errorResponse, Model model) {
-        Response.ResponseBuilder responseBuilder = Response.noContent();
-        for (ResponseModifier modifier : errorResponse.responseModifiers) {
-            try {
-                modifier.modify(responseBuilder, model);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return responseBuilder.build();
     }
 
     private Response buildResponse(DespotRoute element, ParamType param, HashModel model) throws Exception {
