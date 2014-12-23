@@ -60,7 +60,8 @@ public class ApiTest {
                                         is_result_ok(),
                                         full_response(), status(200), MediaTypeTest.PRODUCT_MEDIA_TYPE)).
                 last(redirect_to_first_page(), status(301)).
-                error(RedirectException.class, status(503))
+                error(RedirectException.class, write_error_msg(), status(503)).
+                error(NullPointerException.class, status(503))
                 .verify("/de.itagile.spec/spec.json");
     }
 
