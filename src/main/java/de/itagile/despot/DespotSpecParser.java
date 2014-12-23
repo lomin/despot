@@ -16,7 +16,7 @@ public class DespotSpecParser {
     public static final String MEDIATYPE = "produces";
     public static final String URI = "uri";
     public static final String ENDPOINTS = "endpoints";
-    public static final String ALL_MEDIATYPES = "media_types";
+    public static final String ALL_MEDIATYPES = "mediatypes";
     public static final String FIELDS = "fields";
 
     public Set<Map<String, Object>> getSpec(Method method, String uri, InputStream stream) throws IOException, ParseException {
