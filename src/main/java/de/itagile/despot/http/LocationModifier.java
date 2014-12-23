@@ -9,8 +9,10 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
 
+import static java.util.regex.Pattern.quote;
+
 public class LocationModifier implements ResponseModifier {
-    private static final Key<Iterable<String>> KEY = new Key<Iterable<String>>() {
+    public static final Key<Iterable<String>> KEY = new Key<Iterable<String>>() {
         @Override
         public Iterable<String> getUndefined() {
             return Collections.emptyList();
@@ -40,7 +42,7 @@ public class LocationModifier implements ResponseModifier {
         int i = 0;
         for (String location : locations) {
             if (i >= vars.length) break;
-            path = path.replaceAll(vars[i++], location);
+            path = path.replaceAll(quote(vars[i++]), location);
         }
         responseBuilder.location(URI.create(path));
     }
