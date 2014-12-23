@@ -14,7 +14,7 @@ import java.util.*;
 
 public class Despot<ParamType> {
 
-    private static final Key<Exception> LAST_EXCEPTION = new Key<Exception>() {
+    public static final Key<Exception> LAST_EXCEPTION = new Key<Exception>() {
         @Override
         public Exception getUndefined() {
             return new Exception();
