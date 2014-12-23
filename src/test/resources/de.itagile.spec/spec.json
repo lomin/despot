@@ -53,7 +53,7 @@
       ]
     }
   ],
-  "media_types": [
+  "mediatypes": [
     {
       "name": "application/vnd.itagile.product+json",
       "fields": [
