@@ -87,9 +87,13 @@ public class Despot<ParamType> {
     }
 
     public Despot<ParamType> error(Class<? extends Exception> exception, ResponseModifier... modifiers) {
+        return error(exception, new NOPResponsePartial(), modifiers);
+    }
+
+    public Despot<ParamType> error(Class<? extends Exception> exception, ResponsePartial<ParamType> responsePartial, ResponseModifier... modifiers) {
         List<ResponseModifier> responseModifiers = Arrays.asList(modifiers);
         addSpec(responseModifiers);
-        this.errorResponses.add(new ErrorResponse(exception, responseModifiers));
+        this.errorResponses.add(new ErrorResponse(exception, responsePartial, responseModifiers));
         return this;
     }
 
@@ -104,7 +108,7 @@ public class Despot<ParamType> {
             } catch (Exception e) {
                 for (ErrorResponse errorResponse : errorResponses) {
                     if (errorResponse.exception.isAssignableFrom(e.getClass())) {
-                        return buildErrorResponse(errorResponse, model);
+                        return errorResponse.buildResponse(model, param);
                     }
                 }
                 throw new RuntimeException(e);
@@ -173,11 +177,35 @@ public class Despot<ParamType> {
     private class ErrorResponse {
 
         private final Class<? extends Exception> exception;
-        private final List<ResponseModifier> responseModifiers;
+        private final List<ResponseModifier> responseModifiers = new ArrayList<>();
+        private final ResponsePartial<ParamType> responsePartial;
 
-        public ErrorResponse(Class<? extends Exception> exception, List<ResponseModifier> responseModifiers) {
+        private ErrorResponse(Class<? extends Exception> exception, ResponsePartial<ParamType> responsePartial, List<ResponseModifier> responseModifiers) {
             this.exception = exception;
-            this.responseModifiers = responseModifiers;
+            this.responsePartial = new NOPResponsePartial();
+            this.responseModifiers.addAll(responseModifiers);
+        }
+
+        private Response buildResponse(Model model, ParamType param) {
+            Response.ResponseBuilder responseBuilder = Response.noContent();
+            responseModifiers.add(this.responsePartial.create(param));
+            for (ResponseModifier modifier : responseModifiers) {
+                try {
+                    modifier.modify(responseBuilder, model);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return responseBuilder.build();
+        }
+
+
+    }
+
+    private class NOPResponsePartial extends ResponsePartial<ParamType> {
+        @Override
+        public ResponseModifier create(ParamType param) {
+            return this;
         }
     }
 
