@@ -72,7 +72,7 @@ public class Despot<ParamType> {
         return this;
     }
 
-    public Despot<ParamType> last(ResponsePartial<ParamType> option, ResponseModifier... responseModifiers) {
+    public Despot<ParamType> last(ResponsePartial<? super ParamType> option, ResponseModifier... responseModifiers) {
         return addRoute(new SpecificationPartial<ParamType>() {
             @Override
             public Specification create(ParamType param) {
@@ -90,7 +90,7 @@ public class Despot<ParamType> {
         return error(exception, new NOPResponsePartial(), modifiers);
     }
 
-    public Despot<ParamType> error(Class<? extends Exception> exception, ResponsePartial<ParamType> responsePartial, ResponseModifier... modifiers) {
+    public Despot<ParamType> error(Class<? extends Exception> exception, ResponsePartial<? super ParamType> responsePartial, ResponseModifier... modifiers) {
         List<ResponseModifier> responseModifiers = Arrays.asList(modifiers);
         addSpec(responseModifiers);
         this.errorResponses.add(new ErrorResponse(exception, responsePartial, responseModifiers));
@@ -178,11 +178,11 @@ public class Despot<ParamType> {
 
         private final Class<? extends Exception> exception;
         private final List<ResponseModifier> responseModifiers = new ArrayList<>();
-        private final ResponsePartial<ParamType> responsePartial;
+        private final ResponsePartial<? super ParamType> responsePartial;
 
-        private ErrorResponse(Class<? extends Exception> exception, ResponsePartial<ParamType> responsePartial, List<ResponseModifier> responseModifiers) {
+        private ErrorResponse(Class<? extends Exception> exception, ResponsePartial<? super ParamType> responsePartial, List<ResponseModifier> responseModifiers) {
             this.exception = exception;
-            this.responsePartial = new NOPResponsePartial();
+            this.responsePartial = responsePartial;
             this.responseModifiers.addAll(responseModifiers);
         }
 
