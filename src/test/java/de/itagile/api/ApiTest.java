@@ -25,6 +25,8 @@ import static de.itagile.api.RedirectToFirstPageFull.redirect_to_first_page_full
 import static de.itagile.api.WriteErrorMsg.write_error_msg;
 import static de.itagile.despot.Despot.despot;
 import static de.itagile.despot.Despot.pre;
+import static de.itagile.despot.http.ConsumesSpecified.consumes;
+import static de.itagile.despot.http.LocationModifier.location;
 import static de.itagile.despot.http.MaxAgeModifier.maxAge;
 import static de.itagile.despot.http.StatusModifier.status;
 import static de.itagile.specification.Operations.operations;
@@ -42,13 +44,13 @@ public class ApiTest {
     private final Verifier verifier = mock(Verifier.class);
 
     private static Despot<IProductSearchParams> PRODUCT_SEARCH_API() {
-        return despot("/items/{path}", Despot.Method.GET, IProductSearchParams.class).
+        return despot(IProductSearchParams.class, "/items/{path}", Method.GET, consumes("application/x-www-form-urlencoded")).
                 next(
                         is_invalid_page(),
                         write_error_msg(), status(404), MediaTypeTest.ERROR_MEDIA_TYPE).
                 next(
                         OPS.and(is_invalid_uri(), is_manual_redirect_possible()),
-                        manual_redirect(), status(301), maxAge(5, SECONDS)).
+                        manual_redirect(), status(301), maxAge(5, SECONDS), location("/items/{path}/?p=1", "{path}")).
                 next(
                         pre(not(is_partial_menu())).
                                 next(
@@ -81,7 +83,7 @@ public class ApiTest {
 
     @Test
     public void addsOneModifierToVerifier() throws Exception {
-        new Despot<IProductSearchParams>(verifier, "/items/{path}", Despot.Method.GET).
+        new Despot<IProductSearchParams>(verifier, "/items/{path}", Method.GET).
                 next(
                         is_invalid_page(),
                         redirect_to_first_page(), status(301));
@@ -91,7 +93,7 @@ public class ApiTest {
 
     @Test
     public void addsAllModifiersToVerifier() throws Exception {
-        new Despot<IProductSearchParams>(verifier, "/items/{path}", Despot.Method.GET).
+        new Despot<IProductSearchParams>(verifier, "/items/{path}", Method.GET).
                 next(
                         is_invalid_page(),
                         redirect_to_first_page(), status(200), new JsonMediaType("test-mediatype"));
@@ -101,7 +103,7 @@ public class ApiTest {
 
     @Test
     public void addsModifierDefinedInPreBlockToVerifier() throws Exception {
-        new Despot<IProductSearchParams>(verifier, "/items/{path}", Despot.Method.GET)
+        new Despot<IProductSearchParams>(verifier, "/items/{path}", Method.GET)
                 .next(
                         pre(not(is_partial_menu())).
                                 next(
@@ -113,7 +115,7 @@ public class ApiTest {
 
     @Test
     public void handlesExceptionsWithinDespotExecution() throws Exception {
-        Response response = new Despot<IProductSearchParams>(verifier, "/items/{path}", Despot.Method.GET)
+        Response response = new Despot<IProductSearchParams>(verifier, "/items/{path}", Method.GET)
                 .next(
                         TRUE(IProductSearchParams.class),
                         new RedirectExceptionThrowingResponse(), status(200), new JsonMediaType("ignore"))

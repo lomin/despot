@@ -4,7 +4,9 @@
       "uri": "/items/{path}",
       "methods": [
         {
+          "__description__": "Description for /items/{path}",
           "method": "GET",
+          "consumes": "application/x-www-form-urlencoded",
           "responses": [
             {
               "status-code": 200,
@@ -17,6 +19,7 @@
             },
             {
               "status-code": 301,
+              "location": "/items/{path}/?p=1",
               "max-age": {
                 "duration": 5,
                 "time-unit": "SECONDS"

@@ -1,5 +1,6 @@
 package de.itagile.despot;
 
+import de.itagile.despot.http.MethodSpecified;
 import de.itagile.model.HashModel;
 import de.itagile.model.Model;
 import de.itagile.specification.Specification;
@@ -14,6 +15,7 @@ public class Despot<ParamType> {
 
     private final List<DespotRoute> routes = new ArrayList<>();
     private final Verifier verifier;
+    private List<Specified> additionalSpecifications = new ArrayList<>();
     private String endpoint = "/";
     private Method method = Method.GET;
     private DespotSpecParser specParser = new DespotSpecParser();
@@ -29,10 +31,12 @@ public class Despot<ParamType> {
         this.verifier = new DespotVerifier();
     }
 
-    public static <T> Despot<T> despot(String uri, Method method, Class<T> _) {
+    public static <T> Despot<T> despot(Class<T> _, String uri, Method method, Specified... additionalSpecification) {
         Despot<T> despot = new Despot<>();
         despot.endpoint = uri;
         despot.method = method;
+        despot.additionalSpecifications.addAll(Arrays.asList(additionalSpecification));
+        despot.additionalSpecifications.add(MethodSpecified.method(method));
         return despot;
     }
 
@@ -50,6 +54,9 @@ public class Despot<ParamType> {
         Map<String, Object> spec = new HashMap<>();
         for (ResponseModifier modifier : modifiers) {
             modifier.spec(spec);
+        }
+        for (Specified specification : additionalSpecifications) {
+            specification.spec(spec);
         }
         this.verifier.add(spec);
     }
@@ -146,10 +153,6 @@ public class Despot<ParamType> {
             return this;
         }
         throw verification.exception();
-    }
-
-    public static enum Method {
-        GET, POST, PUT, DELETE;
     }
 
     public static class PreDespot<ParamType> extends Despot<ParamType> {

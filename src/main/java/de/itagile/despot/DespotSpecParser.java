@@ -19,15 +19,52 @@ public class DespotSpecParser {
     public static final String ALL_MEDIATYPES = "media_types";
     public static final String FIELDS = "fields";
 
-    public Set<Map<String, Object>> getSpec(Despot.Method method, String uri, InputStream stream) throws IOException, ParseException {
+    public Set<Map<String, Object>> getSpec(Method method, String uri, InputStream stream) throws IOException, ParseException {
         Map completeSpec = (Map) new JSONParser().parse(new InputStreamReader(stream));
-        Set<Map<String, Object>> spec = extractSpecFrom(method, uri, completeSpec);
+        List<Map<String, Object>> spec = extractSpecFrom(method, uri, completeSpec);
         expandMediaType(spec, completeSpec);
+        addAdditionalSpecification(method, uri, spec, completeSpec);
+        removeDescription(spec);
         return new HashSet<>(spec); // necessary, since items in spec have been modified.
 
     }
 
-    private void expandMediaType(Set<Map<String, Object>> specs, Map completeSpec) {
+    private void addAdditionalSpecification(Method method, String uri, List<Map<String, Object>> spec, Map completeSpec) {
+        List endpoints = (List) completeSpec.get(ENDPOINTS);
+        for (Object element : endpoints) {
+            Map endpointMap = (Map) element;
+            if (uri.equals(endpointMap.get(URI))) {
+                List methods = (List) endpointMap.get(METHODS);
+                for (Object element1 : methods) {
+                    Map<String, Object> methodMap = (Map<String, Object>) element1;
+                    if (method.name().equals(methodMap.get(METHOD))) {
+                        for (String key : methodMap.keySet()) {
+                            if (!key.equals(RESPONSES)) {
+                                for (Map<String, Object> stringObjectMap : spec) {
+                                    stringObjectMap.put(key, methodMap.get(key));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Iterator<Map<String, Object>> iterator = spec.iterator();
+    }
+
+    private void removeDescription(List<Map<String, Object>> spec) {
+        for (Map<String, Object> map : spec) {
+            Iterator<String> iterator = map.keySet().iterator();
+            while (iterator.hasNext()) {
+                String next = iterator.next();
+                if (next.equals("__description__")) {
+                    iterator.remove();
+                }
+            }
+        }
+    }
+
+    private void expandMediaType(List<Map<String, Object>> specs, Map completeSpec) {
         for (Map<String, Object> mySpec : specs) {
             Object myMediaType = mySpec.get(MEDIATYPE);
             Iterable<Map<String, Object>> allMediaTypes = (Iterable<Map<String, Object>>) completeSpec.get(ALL_MEDIATYPES);
@@ -58,13 +95,13 @@ public class DespotSpecParser {
         mediaType.put(FIELDS, expandedFields);
     }
 
-    public Set<Map<String, Object>> extractSpecFrom(Despot.Method method, String uri, Map completeSpec) {
-        Set<Map<String, Object>> result = new HashSet<>();
+    public List<Map<String, Object>> extractSpecFrom(Method method, String uri, Map completeSpec) {
+        List<Map<String, Object>> result = new ArrayList<>();
         visitAllEndpoints(method, uri, completeSpec, result);
         return result;
     }
 
-    public void visitAllEndpoints(Despot.Method method, String uri, Map completeSpec, Set<Map<String, Object>> result) {
+    public void visitAllEndpoints(Method method, String uri, Map completeSpec, List<Map<String, Object>> result) {
         List endpoints = (List) completeSpec.get(ENDPOINTS);
         for (Object element : endpoints) {
             Map endpointMap = (Map) element;
@@ -74,27 +111,14 @@ public class DespotSpecParser {
         }
     }
 
-    private void visitAllMethods(Despot.Method method, Map endpointMap, Set<Map<String, Object>> result) {
+    private void visitAllMethods(Method method, Map endpointMap, List<Map<String, Object>> result) {
         List methods = (List) endpointMap.get(METHODS);
         for (Object element : methods) {
             Map methodMap = (Map) element;
             if (method.name().equals(methodMap.get(METHOD))) {
-                visitAllResponses(methodMap, result);
+                List allResponses = (List) methodMap.get(RESPONSES);
+                result.addAll(allResponses);
             }
-        }
-    }
-
-    private void visitAllResponses(Map methodMap, Set<Map<String, Object>> result) {
-        List allResponses = (List) methodMap.get(RESPONSES);
-        for (Object response : allResponses) {
-            Map responseMap = (Map) response;
-            Iterator responseMapIterator = responseMap.keySet().iterator();
-            while (responseMapIterator.hasNext()) {
-                if (responseMapIterator.next().toString().equals("__description__")) {
-                    responseMapIterator.remove();
-                }
-            }
-            result.add(responseMap);
         }
     }
 
