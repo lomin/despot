@@ -1,19 +1,19 @@
 package de.itagile.api;
 
-import de.itagile.specification.Specification;
-import de.itagile.specification.SpecificationPartial;
+import de.itagile.predicate.Predicate;
+import de.itagile.predicate.PredicateFactory;
 
-public class IsPageNrOutOfRange extends SpecificationPartial<IProductSearchParams> {
+public class IsPageNrOutOfRange implements Predicate {
     private IsPageNrOutOfRange() {
     }
 
-    public static IsPageNrOutOfRange is_page_nr_out_of_range() {
-        return new IsPageNrOutOfRange();
-    }
-
-    @Override
-    public Specification create(IProductSearchParams param) {
-        return is_page_nr_out_of_range();
+    public static PredicateFactory<IProductSearchParams> is_page_nr_out_of_range() {
+        return new PredicateFactory<IProductSearchParams>() {
+            @Override
+            public Predicate createPredicate(IProductSearchParams param) {
+                return new IsPageNrOutOfRange();
+            }
+        };
     }
 
     @Override

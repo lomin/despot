@@ -1,23 +1,24 @@
 package de.itagile.api;
 
 import de.itagile.despot.ResponseModifier;
-import de.itagile.despot.ResponsePartial;
+import de.itagile.despot.ResponseFactory;
 import de.itagile.mediatype.MediaTypeTest;
 import de.itagile.model.Model;
 
 import javax.ws.rs.core.Response;
+import java.util.Map;
 
-public class WriteErrorMsg extends ResponsePartial<WriteErrorMsg.IErrorMsg> {
+public class WriteErrorMsg implements ResponseModifier {
     private WriteErrorMsg() {
     }
 
-    public static WriteErrorMsg write_error_msg() {
-        return new WriteErrorMsg();
-    }
-
-    @Override
-    public ResponseModifier create(IErrorMsg param) {
-        return write_error_msg();
+    public static ResponseFactory<IErrorMsg> write_error_msg() {
+        return new ResponseFactory<IErrorMsg>() {
+            @Override
+            public ResponseModifier createResponseModifier(IErrorMsg param) {
+                return new WriteErrorMsg();
+            }
+        };
     }
 
     @Override
@@ -25,7 +26,12 @@ public class WriteErrorMsg extends ResponsePartial<WriteErrorMsg.IErrorMsg> {
         model.update(MediaTypeTest.REASON_FIELD, "Something went wrong.");
     }
 
-    public static interface IErrorMsg {
+    @Override
+    public void spec(Map spec) {
+
+    }
+
+    public interface IErrorMsg {
 
     }
 }

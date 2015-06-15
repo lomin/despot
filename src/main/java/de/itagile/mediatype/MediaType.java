@@ -81,7 +81,7 @@ public class MediaType<T, FormatType extends Format<T>> implements Iterable<Form
     @Override
     public void modify(Response.ResponseBuilder responseBuilder, Model model) throws Exception {
         T entity = modify(model);
-        responseBuilder.entity(entity);
+        responseBuilder.entity(entity).type(this.name);
     }
 
     @Override

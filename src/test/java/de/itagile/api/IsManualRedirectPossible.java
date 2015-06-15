@@ -1,19 +1,19 @@
 package de.itagile.api;
 
-import de.itagile.specification.Specification;
-import de.itagile.specification.SpecificationPartial;
+import de.itagile.predicate.Predicate;
+import de.itagile.predicate.PredicateFactory;
 
-public class IsManualRedirectPossible extends SpecificationPartial<IsManualRedirectPossible.IIsManualRedirectPossible> {
-    private IsManualRedirectPossible() {
+public class IsManualRedirectPossible implements Predicate {
+    private IsManualRedirectPossible(IIsManualRedirectPossible param) {
     }
 
-    public static IsManualRedirectPossible is_manual_redirect_possible() {
-        return new IsManualRedirectPossible();
-    }
-
-    @Override
-    public Specification create(IIsManualRedirectPossible param) {
-        return is_manual_redirect_possible();
+    public static PredicateFactory<IIsManualRedirectPossible> is_manual_redirect_possible() {
+        return new PredicateFactory<IIsManualRedirectPossible>(){
+            @Override
+            public Predicate createPredicate(IIsManualRedirectPossible param) {
+                return new IsManualRedirectPossible(param);
+            }
+        };
     }
 
     @Override
@@ -21,7 +21,7 @@ public class IsManualRedirectPossible extends SpecificationPartial<IsManualRedir
         return false;
     }
 
-    public static interface IIsManualRedirectPossible {
+    public interface IIsManualRedirectPossible {
         String findRedirectMappingByOldPath(String path);
     }
 }

@@ -1,26 +1,27 @@
 package de.itagile.api;
 
 import de.itagile.despot.ResponseModifier;
-import de.itagile.despot.ResponsePartial;
+import de.itagile.despot.ResponseFactory;
 import de.itagile.mediatype.MediaTypeTest;
 import de.itagile.model.Model;
 
 import javax.ws.rs.core.Response;
+import java.util.Map;
 
-public class FullResponse extends ResponsePartial<FullResponse.IFullResponseParams> {
+public class FullResponse implements ResponseModifier {
     private final IFullResponseParams param;
 
     private FullResponse(IFullResponseParams param) {
         this.param = param;
     }
 
-    public static FullResponse full_response() {
-        return new FullResponse(null);
-    }
-
-    @Override
-    public ResponseModifier create(IFullResponseParams param) {
-        return new FullResponse(param);
+    public static ResponseFactory<IFullResponseParams> full_response() {
+        return new ResponseFactory<IFullResponseParams>() {
+            @Override
+            public ResponseModifier createResponseModifier(IFullResponseParams param) {
+                return new FullResponse(param);
+            }
+        };
     }
 
     @Override
@@ -30,7 +31,12 @@ public class FullResponse extends ResponsePartial<FullResponse.IFullResponsePara
         model.update(MediaTypeTest.TEMPLATE_NAME_FIELD, "/path/to/testTemplate");
     }
 
-    public static interface IFullResponseParams {
+    @Override
+    public void spec(Map<String, Object> spec) {
+
+    }
+
+    public interface IFullResponseParams {
         String getProductId();
     }
 }

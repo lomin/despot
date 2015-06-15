@@ -1,20 +1,22 @@
 package de.itagile.api;
 
-import de.itagile.specification.Specification;
-import de.itagile.specification.SpecificationPartial;
+import de.itagile.predicate.Predicate;
+import de.itagile.predicate.PredicateFactory;
 
-public class IsInvalidPage extends SpecificationPartial<IsInvalidPage.Pageable> {
+public class IsInvalidPage implements Predicate {
     private Pageable pageable;
-
-    private IsInvalidPage() {
-    }
 
     private IsInvalidPage(Pageable pageable) {
         this.pageable = pageable;
     }
 
-    public static IsInvalidPage is_invalid_page() {
-        return new IsInvalidPage();
+    public static PredicateFactory<Pageable> is_invalid_page() {
+        return new PredicateFactory<Pageable>() {
+            @Override
+            public Predicate createPredicate(Pageable param) {
+                return new IsInvalidPage(param);
+            }
+        };
     }
 
     @Override
@@ -22,12 +24,7 @@ public class IsInvalidPage extends SpecificationPartial<IsInvalidPage.Pageable> 
         return pageable.getPage() < 0;
     }
 
-    @Override
-    public Specification create(Pageable pageable) {
-        return new IsInvalidPage(pageable);
-    }
-
-    public static interface Pageable {
+    public interface Pageable {
         int getPage();
     }
 }

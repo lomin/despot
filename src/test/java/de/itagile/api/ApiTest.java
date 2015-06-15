@@ -5,7 +5,7 @@ import de.itagile.despot.http.StatusModifier;
 import de.itagile.mediatype.MediaTypeTest;
 import de.itagile.mediatype.simpleJson.JsonMediaType;
 import de.itagile.model.Model;
-import de.itagile.specification.Operations;
+import de.itagile.predicate.Operations;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
@@ -21,7 +21,6 @@ import static de.itagile.api.IsPartialMenu.is_partial_menu;
 import static de.itagile.api.IsResultOk.is_result_ok;
 import static de.itagile.api.ManualRedirect.manual_redirect;
 import static de.itagile.api.RedirectToFirstPage.redirect_to_first_page;
-import static de.itagile.api.RedirectToFirstPageFull.redirect_to_first_page_full;
 import static de.itagile.api.WriteErrorMsg.write_error_msg;
 import static de.itagile.despot.Despot.despot;
 import static de.itagile.despot.Despot.pre;
@@ -29,9 +28,8 @@ import static de.itagile.despot.http.ConsumesSpecified.consumes;
 import static de.itagile.despot.http.LocationModifier.location;
 import static de.itagile.despot.http.MaxAgeModifier.maxAge;
 import static de.itagile.despot.http.StatusModifier.status;
-import static de.itagile.specification.Operations.operations;
-import static de.itagile.specification.SpecificationPartial.TRUE;
-import static de.itagile.specification.SpecificationPartial.not;
+import static de.itagile.despot.http.TextEntityModifier.text;
+import static de.itagile.predicate.Operations.operations;
 import static de.itagile.util.CollectionUtil.mapOf;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
@@ -52,10 +50,10 @@ public class ApiTest {
                         OPS.and(is_invalid_uri(), is_manual_redirect_possible()),
                         manual_redirect(), status(301), maxAge(5, SECONDS), location("/items/{path}/?p=1", "{path}")).
                 next(
-                        pre(not(is_partial_menu())).
+                        pre(OPS.not(is_partial_menu())).
                                 next(
                                         is_page_nr_out_of_range(),
-                                        redirect_to_first_page_full(), status(301)).
+                                        text("Page Number Out of Range!"), status(301)).
                                 next(
                                         is_result_ok(),
                                         full_response(), status(200), MediaTypeTest.PRODUCT_MEDIA_TYPE)).
@@ -106,7 +104,7 @@ public class ApiTest {
     public void addsModifierDefinedInPreBlockToVerifier() throws Exception {
         new Despot<IProductSearchParams>(verifier, "/items/{path}", Method.GET)
                 .next(
-                        pre(not(is_partial_menu())).
+                        pre(OPS.not(is_partial_menu())).
                                 next(
                                         is_result_ok(),
                                         full_response(), status(503), new JsonMediaType("error")));
@@ -118,23 +116,31 @@ public class ApiTest {
     public void handlesExceptionsWithinDespotExecution() throws Exception {
         Response response = new Despot<IProductSearchParams>(verifier, "/items/{path}", Method.GET)
                 .next(
-                        TRUE(IProductSearchParams.class),
-                        new RedirectExceptionThrowingResponse(), status(200), new JsonMediaType("ignore"))
+                        OPS.TRUE(),
+                        redirectExceptionThrowingResponse(), status(200), new JsonMediaType("ignore"))
                 .error(RedirectException.class, status(503))
                 .response(new ProductSearchParams());
 
         assertEquals(503, response.getStatus());
     }
 
-    private class RedirectExceptionThrowingResponse extends ResponsePartial<IProductSearchParams> {
-        @Override
-        public ResponseModifier create(IProductSearchParams param) {
-            return this;
-        }
+    private ResponseFactory<IProductSearchParams> redirectExceptionThrowingResponse() {
+        return new ResponseFactory<IProductSearchParams>() {
+            @Override
+            public ResponseModifier createResponseModifier(IProductSearchParams param) {
+                return new RedirectExceptionThrowingResponse();
+            }
+        };
+    }
 
+    private class RedirectExceptionThrowingResponse implements ResponseModifier {
         @Override
         public void modify(Response.ResponseBuilder responseBuilder, Model model) throws Exception {
             throw new RedirectException();
+        }
+
+        @Override
+        public void spec(Map spec) {
         }
     }
 }

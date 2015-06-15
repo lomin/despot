@@ -1,19 +1,19 @@
 package de.itagile.api;
 
-import de.itagile.specification.Specification;
-import de.itagile.specification.SpecificationPartial;
+import de.itagile.predicate.Predicate;
+import de.itagile.predicate.PredicateFactory;
 
-public class IsResultOk extends SpecificationPartial<IProductSearchParams> {
+public class IsResultOk implements Predicate {
     private IsResultOk() {
     }
 
-    public static IsResultOk is_result_ok() {
-        return new IsResultOk();
-    }
-
-    @Override
-    public Specification create(IProductSearchParams param) {
-        return is_result_ok();
+    public static PredicateFactory<IProductSearchParams> is_result_ok() {
+        return new PredicateFactory<IProductSearchParams>() {
+            @Override
+            public IsResultOk createPredicate(IProductSearchParams param) {
+                return new IsResultOk();
+            }
+        };
     }
 
     @Override

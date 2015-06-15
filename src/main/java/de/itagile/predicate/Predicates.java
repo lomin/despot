@@ -1,16 +1,16 @@
-package de.itagile.specification;
+package de.itagile.predicate;
 
-public class Specifications {
+public class Predicates {
 
-    private static final Specification TRUE = new Specification() {
+    private static final Predicate TRUE = new Predicate() {
         @Override
         public boolean isTrue() {
             return true;
         }
     };
 
-    public static Specification not(final Specification spec) {
-        return new Specification() {
+    public static Predicate not(final Predicate spec) {
+        return new Predicate() {
             @Override
             public boolean isTrue() throws Exception {
                 return !spec.isTrue();
@@ -18,8 +18,8 @@ public class Specifications {
         };
     }
 
-    public static Specification and(final Specification first, final Specification second) {
-        return new Specification() {
+    public static Predicate and(final Predicate first, final Predicate second) {
+        return new Predicate() {
             @Override
             public boolean isTrue() throws Exception {
                 return first.isTrue() && second.isTrue();
@@ -27,8 +27,8 @@ public class Specifications {
         };
     }
 
-    public static Specification or(final Specification first, final Specification second) {
-        return new Specification() {
+    public static Predicate or(final Predicate first, final Predicate second) {
+        return new Predicate() {
             @Override
             public boolean isTrue() throws Exception {
                 return first.isTrue() || second.isTrue();
@@ -36,7 +36,7 @@ public class Specifications {
         };
     }
 
-    public static Specification TRUE() {
+    public static Predicate TRUE() {
         return TRUE;
     }
 

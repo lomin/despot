@@ -4,8 +4,9 @@ import de.itagile.despot.http.MethodSpecified;
 import de.itagile.model.HashModel;
 import de.itagile.model.Key;
 import de.itagile.model.Model;
-import de.itagile.specification.Specification;
-import de.itagile.specification.SpecificationPartial;
+import de.itagile.predicate.Operations;
+import de.itagile.predicate.Predicate;
+import de.itagile.predicate.PredicateFactory;
 import org.json.simple.parser.ParseException;
 
 import javax.ws.rs.core.Response;
@@ -22,6 +23,7 @@ public class Despot<ParamType> {
     };
     private final List<DespotRoute> routes = new ArrayList<>();
     private final Verifier verifier;
+    private final Operations<ParamType> OPS = new Operations<>();
     private List<Specified> additionalSpecifications = new ArrayList<>();
     private String endpoint = "/";
     private Method method = Method.GET;
@@ -38,7 +40,7 @@ public class Despot<ParamType> {
         this.verifier = new DespotVerifier();
     }
 
-    public static <T> Despot<T> despot(Class<T> _, String uri, Method method, Specified... additionalSpecification) {
+    public static <T> Despot<T> despot(Class<T> ignore, String uri, Method method, Specified... additionalSpecification) {
         Despot<T> despot = new Despot<>();
         despot.endpoint = uri;
         despot.method = method;
@@ -47,11 +49,11 @@ public class Despot<ParamType> {
         return despot;
     }
 
-    public static <ParamType> PreDespot<ParamType> pre(SpecificationPartial<ParamType> specification) {
+    public static <ParamType> PreDespot<ParamType> pre(PredicateFactory<? super ParamType> specification) {
         return new PreDespot<>(specification);
     }
 
-    private Despot<ParamType> addRoute(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, List<ResponseModifier> modifiers) {
+    private Despot<ParamType> addRoute(PredicateFactory<? super ParamType> specification, ResponseFactory<? super ParamType> option, List<ResponseModifier> modifiers) {
         addSpec(modifiers);
         this.routes.add(new DespotRoute(specification, option, modifiers));
         return this;
@@ -68,8 +70,12 @@ public class Despot<ParamType> {
         this.verifier.add(spec);
     }
 
-    public Despot<ParamType> next(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, ResponseModifier... responseModifiers) {
+    public Despot<ParamType> next(PredicateFactory<? super ParamType> specification, ResponseFactory<? super ParamType> option, ResponseModifier... responseModifiers) {
         return addRoute(specification, option, Arrays.asList(responseModifiers));
+    }
+
+    public <PredicateResponsePartial extends PredicateFactory<? super ParamType> & ResponseFactory<? super ParamType>> Despot<ParamType> next(PredicateResponsePartial predicateResponsePartial, ResponseModifier... responseModifiers) {
+        return addRoute(predicateResponsePartial, predicateResponsePartial, Arrays.asList(responseModifiers));
     }
 
     public Despot<ParamType> next(Despot<ParamType> preDespot) {
@@ -79,25 +85,25 @@ public class Despot<ParamType> {
         return this;
     }
 
-    public Despot<ParamType> last(ResponsePartial<? super ParamType> option, ResponseModifier... responseModifiers) {
-        return addRoute(new SpecificationPartial<ParamType>() {
+    public Despot<ParamType> last(ResponseFactory<? super ParamType> option, ResponseModifier... responseModifiers) {
+        return addRoute(new PredicateFactory<ParamType>() {
             @Override
-            public Specification create(ParamType param) {
-                return this;
-            }
-
-            @Override
-            public boolean isTrue() {
-                return true;
+            public Predicate createPredicate(ParamType param) {
+                return new Predicate() {
+                    @Override
+                    public boolean isTrue() throws Exception {
+                        return true;
+                    }
+                };
             }
         }, option, Arrays.asList(responseModifiers));
     }
 
     public Despot<ParamType> error(Class<? extends Exception> exception, ResponseModifier... modifiers) {
-        return error(exception, new NOPResponsePartial(), modifiers);
+        return error(exception, new NOPResponseFactory(), modifiers);
     }
 
-    public Despot<ParamType> error(Class<? extends Exception> exception, ResponsePartial<? super ParamType> responsePartial, ResponseModifier... modifiers) {
+    public Despot<ParamType> error(Class<? extends Exception> exception, ResponseFactory<? super ParamType> responsePartial, ResponseModifier... modifiers) {
         List<ResponseModifier> responseModifiers = Arrays.asList(modifiers);
         addSpec(responseModifiers);
         this.errorResponses.add(new ErrorResponse(exception, responsePartial, responseModifiers));
@@ -108,7 +114,7 @@ public class Despot<ParamType> {
         HashModel model = new HashModel();
         for (DespotRoute route : routes) {
             try {
-                Specification specification = route.specification.create(param);
+                Predicate specification = route.specification.createPredicate(param);
                 if (specification.isTrue()) {
                     return buildResponse(route, param, model);
                 }
@@ -127,7 +133,7 @@ public class Despot<ParamType> {
 
     private Response buildResponse(DespotRoute element, ParamType param, HashModel model) throws Exception {
         Response.ResponseBuilder responseBuilder = Response.noContent();
-        ResponseModifier response = element.response.create(param);
+        ResponseModifier response = element.response.createResponseModifier(param);
         response.modify(responseBuilder, model);
         for (ResponseModifier modifier : element.modifiers) {
             modifier.modify(responseBuilder, model);
@@ -157,15 +163,15 @@ public class Despot<ParamType> {
 
     public static class PreDespot<ParamType> extends Despot<ParamType> {
 
-        private final SpecificationPartial<ParamType> s;
+        private final PredicateFactory<? super ParamType> s;
 
-        private PreDespot(SpecificationPartial<ParamType> s) {
+        private PreDespot(PredicateFactory<? super ParamType> s) {
             super();
             this.s = s;
         }
 
-        public PreDespot<ParamType> next(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> option, ResponseModifier... responseModifiers) {
-            super.next(SpecificationPartial.and(s, specification, null), option, responseModifiers);
+        public PreDespot<ParamType> next(PredicateFactory<? super ParamType> specification, ResponseFactory<? super ParamType> option, ResponseModifier... responseModifiers) {
+            super.next(super.OPS.and(s, specification), option, responseModifiers);
             return this;
         }
     }
@@ -174,9 +180,9 @@ public class Despot<ParamType> {
 
         private final Class<? extends Exception> exception;
         private final List<ResponseModifier> responseModifiers = new ArrayList<>();
-        private final ResponsePartial<? super ParamType> responsePartial;
+        private final ResponseFactory<? super ParamType> responsePartial;
 
-        private ErrorResponse(Class<? extends Exception> exception, ResponsePartial<? super ParamType> responsePartial, List<ResponseModifier> responseModifiers) {
+        private ErrorResponse(Class<? extends Exception> exception, ResponseFactory<? super ParamType> responsePartial, List<ResponseModifier> responseModifiers) {
             this.exception = exception;
             this.responsePartial = responsePartial;
             this.responseModifiers.addAll(responseModifiers);
@@ -184,7 +190,7 @@ public class Despot<ParamType> {
 
         private Response buildResponse(Model model, ParamType param) {
             Response.ResponseBuilder responseBuilder = Response.noContent();
-            responseModifiers.add(this.responsePartial.create(param));
+            responseModifiers.add(this.responsePartial.createResponseModifier(param));
             for (ResponseModifier modifier : responseModifiers) {
                 try {
                     modifier.modify(responseBuilder, model);
@@ -198,19 +204,29 @@ public class Despot<ParamType> {
 
     }
 
-    private class NOPResponsePartial extends ResponsePartial<ParamType> {
+    private class NOPResponseFactory implements ResponseFactory<ParamType> {
         @Override
-        public ResponseModifier create(ParamType param) {
-            return this;
+        public ResponseModifier createResponseModifier(ParamType param) {
+            return new ResponseModifier() {
+                @Override
+                public void modify(Response.ResponseBuilder responseBuilder, Model model) throws Exception {
+
+                }
+
+                @Override
+                public void spec(Map<String, Object> spec) {
+
+                }
+            };
         }
     }
 
     private class DespotRoute {
-        private final SpecificationPartial<? super ParamType> specification;
-        private final ResponsePartial<? super ParamType> response;
+        private final PredicateFactory<? super ParamType> specification;
+        private final ResponseFactory<? super ParamType> response;
         private final List<ResponseModifier> modifiers;
 
-        private DespotRoute(SpecificationPartial<? super ParamType> specification, ResponsePartial<? super ParamType> response, List<ResponseModifier> modifiers) {
+        private DespotRoute(PredicateFactory<? super ParamType> specification, ResponseFactory<? super ParamType> response, List<ResponseModifier> modifiers) {
             this.specification = specification;
             this.response = response;
             this.modifiers = modifiers;

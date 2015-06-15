@@ -1,27 +1,34 @@
 package de.itagile.api;
 
-import de.itagile.specification.Specification;
-import de.itagile.specification.SpecificationPartial;
+import de.itagile.predicate.Predicate;
+import de.itagile.predicate.PredicateFactory;
 
-public class IsInvalidUri extends SpecificationPartial<IsInvalidUri.IIsInvalidUri> {
-    private IsInvalidUri() {
+public class IsInvalidUri implements Predicate {
+    private final String uri;
+
+    private IsInvalidUri(IIsInvalidUri param) {
+        this(param.getUri());
     }
 
-    public static IsInvalidUri is_invalid_uri() {
-        return new IsInvalidUri();
+    public IsInvalidUri(String uri) {
+        this.uri = uri;
     }
 
-    @Override
-    public Specification create(IIsInvalidUri param) {
-        return is_invalid_uri();
+    public static PredicateFactory<IIsInvalidUri> is_invalid_uri() {
+        return new PredicateFactory<IIsInvalidUri>() {
+            @Override
+            public Predicate createPredicate(IIsInvalidUri param) {
+                return new IsInvalidUri(param);
+            }
+        };
     }
 
     @Override
     public boolean isTrue() {
-        return false;
+        return uri == null;
     }
 
-    public static interface IIsInvalidUri {
+    public interface IIsInvalidUri {
         String getUri();
     }
 }

@@ -1,19 +1,19 @@
 package de.itagile.api;
 
-import de.itagile.specification.Specification;
-import de.itagile.specification.SpecificationPartial;
+import de.itagile.predicate.Predicate;
+import de.itagile.predicate.PredicateFactory;
 
-public class IsPartialMenu extends SpecificationPartial<IProductSearchParams> {
+public class IsPartialMenu implements Predicate {
     private IsPartialMenu() {
     }
 
-    public static IsPartialMenu is_partial_menu() {
-        return new IsPartialMenu();
-    }
-
-    @Override
-    public Specification create(IProductSearchParams param) {
-        return is_partial_menu();
+    public static PredicateFactory<IProductSearchParams> is_partial_menu() {
+        return new PredicateFactory<IProductSearchParams>() {
+            @Override
+            public Predicate createPredicate(IProductSearchParams param) {
+                return new IsPartialMenu();
+            }
+        };
     }
 
     @Override
