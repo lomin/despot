@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
 
+@SuppressWarnings("unchecked")
 public class DespotSpecParser {
 
     public static final String RESPONSES = "responses";
@@ -18,6 +19,79 @@ public class DespotSpecParser {
     public static final String ENDPOINTS = "endpoints";
     public static final String ALL_MEDIATYPES = "mediatypes";
     public static final String FIELDS = "fields";
+
+    private static Iterator<Item> mapIterator(final Map input, final Map result) {
+        final Iterator<Map.Entry> iterator = input.entrySet().iterator();
+        return new Iterator<Item>() {
+            @Override
+            public boolean hasNext() {
+                return iterator.hasNext();
+            }
+
+            @Override
+            public Item next() {
+                Map.Entry next = iterator.next();
+                Object value = next.getValue();
+                String key = next.getKey().toString();
+                if (value instanceof Map) {
+                    return new AddMapToMapEntry(result, key, (Map) value, new HashMap());
+                } else
+                if (value instanceof Collection) {
+                    return new AddSetToMapEntry(result, key, (Collection) value, new HashSet());
+                } else {
+                    return new AddValueToMapEntry(result, key, value.toString());
+                }
+            }
+
+            @Override
+            public void remove() {
+                iterator.remove();
+            }
+        };
+    }
+
+    private static Iterator<Item> emptyIterator() {
+        return new Iterator<Item>() {
+            @Override
+            public boolean hasNext() {
+                return false;
+            }
+
+            @Override
+            public Item next() {
+                return null;
+            }
+
+            @Override
+            public void remove() {
+            }
+        };
+    }
+
+    private static Iterator<Item> collectionIterator(final Collection input, final Set result) {
+        final Iterator iterator = input.iterator();
+        return new Iterator<Item>() {
+            @Override
+            public boolean hasNext() {
+                return iterator.hasNext();
+            }
+
+            @Override
+            public Item next() {
+                Object value = iterator.next();
+                if (value instanceof Map) {
+                    return new AddMapToSetEntry(result, (Map) value, new HashMap());
+                } else {
+                    return new AddValueToSet(result, value.toString());
+                }
+            }
+
+            @Override
+            public void remove() {
+                iterator.remove();
+            }
+        };
+    }
 
     public Set<Map<String, Object>> getSpec(Method method, String uri, InputStream stream) throws IOException, ParseException {
         Map completeSpec = (Map) new JSONParser().parse(new InputStreamReader(stream));
@@ -122,4 +196,163 @@ public class DespotSpecParser {
         }
     }
 
+    public Map<String, Object> toStringMap(Map<String, Object> input) {
+        Deque<Item> commands = new ArrayDeque<>();
+        Deque<Item> inputQueue = new ArrayDeque<>();
+        HashMap result = new HashMap();
+        RootEntry root = new RootEntry(input, result);
+        inputQueue.add(root);
+        while (!inputQueue.isEmpty()) {
+            Item first = inputQueue.pop();
+            commands.push(first);
+            for (Item child : first) {
+                inputQueue.add(child);
+            }
+        }
+        while(!commands.isEmpty()) {
+            commands.pop().call();
+        }
+        return result;
+    }
+
+
+    private interface Item extends Iterable<Item> {
+        void call();
+
+        @Override
+        Iterator<Item> iterator();
+    }
+
+    private static class AddMapToMapEntry implements Item {
+
+        private final Map parent;
+        private final String key;
+        private final Map child;
+        private final Map result;
+
+        private AddMapToMapEntry(Map parent, String key, Map child, Map result) {
+            this.parent = parent;
+            this.key = key;
+            this.child = child;
+            this.result = result;
+        }
+
+        @Override
+        public void call() {
+            parent.put(key, result);
+        }
+
+        @Override
+        public Iterator<Item> iterator() {
+            return mapIterator(child, result);
+        }
+    }
+
+    private static class AddValueToMapEntry implements Item {
+
+        private final Map parent;
+        private final String key;
+        private final String value;
+
+        private AddValueToMapEntry(Map parent, String key, String value) {
+            this.parent = parent;
+            this.key = key;
+            this.value = value;
+        }
+
+        @Override
+        public void call() {
+            parent.put(key, value);
+        }
+
+        @Override
+        public Iterator<Item> iterator() {
+            return emptyIterator();
+        }
+    }
+
+    private static class AddSetToMapEntry implements Item {
+        private final Map parent;
+        private final String key;
+        private final Collection collection;
+        private final Set result;
+
+        private AddSetToMapEntry(Map parent, String key, Collection collection, Set result) {
+            this.parent = parent;
+            this.key = key;
+            this.collection = collection;
+            this.result = result;
+        }
+
+        @Override
+        public void call() {
+            parent.put(key, result);
+        }
+
+        @Override
+        public Iterator<Item> iterator() {
+            return collectionIterator(collection, result);
+        }
+    }
+
+    private static class AddValueToSet implements Item {
+        private final Set parent;
+        private final String value;
+
+        public AddValueToSet(Set parent, String value) {
+            this.parent = parent;
+            this.value = value;
+        }
+
+        @Override
+        public void call() {
+            parent.add(value);
+        }
+
+        @Override
+        public Iterator<Item> iterator() {
+            return emptyIterator();
+        }
+    }
+
+    private static class AddMapToSetEntry implements Item {
+        private final Collection parent;
+        private final Map child;
+        private final Map result;
+
+        private AddMapToSetEntry(Collection parent, Map child, Map result) {
+            this.parent = parent;
+            this.child = child;
+            this.result = result;
+        }
+
+        @Override
+        public void call() {
+            parent.add(result);
+        }
+
+        @Override
+        public Iterator<Item> iterator() {
+            return mapIterator(child, result);
+        }
+    }
+
+    private class RootEntry implements Item {
+        private final Map map;
+        private final Map result;
+
+        public RootEntry(Map input, Map result) {
+            this.map = input;
+            this.result = result;
+        }
+
+        @Override
+        public void call() {
+        }
+
+        @Override
+        public Iterator<Item> iterator() {
+            return mapIterator(map, result);
+        }
+    }
 }

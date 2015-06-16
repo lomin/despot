@@ -6,8 +6,8 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Set;
 
-import static de.itagile.util.CollectionUtil.mapOf;
-import static de.itagile.util.CollectionUtil.setOf;
+import static de.itagile.despot.CollectionUtil.mapOf;
+import static de.itagile.despot.CollectionUtil.setOf;
 import static org.junit.Assert.assertEquals;
 
 public class DespotSpecParserTest {
@@ -50,6 +50,32 @@ public class DespotSpecParserTest {
                                         "type", mapOf("name", "String"))
                         ))), spec.iterator().next());
 
+    }
+
+    @Test
+    public void transformsToStringMap() throws Exception {
+        Map<String, Object> input = mapOf(
+                "method", "GET",
+                "status_code", 405L,
+                "produces", mapOf(
+                        "name", "application/vnd.itagile.error+json",
+                        "fields", setOf(
+                                mapOf(
+                                        "params", setOf(1, 2, 3),
+                                        "type", mapOf("name", "String"))
+                        )));
+        Map<String, Object> expected = mapOf(
+                "method", "GET",
+                "status_code", "405",
+                "produces", mapOf(
+                        "name", "application/vnd.itagile.error+json",
+                        "fields", setOf(
+                                mapOf(
+                                        "params", setOf("1", "2", "3"),
+                                        "type", mapOf("name", "String"))
+                        )));
+
+        assertEquals(expected, parser.toStringMap(input));
     }
 
     private InputStream getStream() {
