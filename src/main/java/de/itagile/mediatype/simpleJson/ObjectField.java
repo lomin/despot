@@ -25,10 +25,10 @@ public class ObjectField implements Key<Model>, JsonFormat {
         Model childModel = model.get(this);
         if (childModel == null) return;
         JSONObject subType = new JSONObject();
-        result.put(name, subType);
         for (JsonFormat key : keys) {
             key.transform(childModel, subType);
         }
+        result.put(name, subType);
     }
 
     @Override

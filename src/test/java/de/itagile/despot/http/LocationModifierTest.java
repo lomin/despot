@@ -1,30 +1,38 @@
 package de.itagile.despot.http;
 
-import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
-import de.itagile.despot.ResponseModifier;
 import de.itagile.model.HashModel;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
-
+import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 
+import static de.itagile.despot.CollectionUtil.mapOf;
 import static de.itagile.despot.http.LocationModifier.location;
+import static de.itagile.despot.http.LocationModifier.locationBuilder;
 import static org.junit.Assert.assertEquals;
 
 public class LocationModifierTest {
 
     @Test
-    public void replacesEvenExpressionUsedInRegexes() throws Exception {
+    public void replacesVarsInLocationBuilder() throws Exception {
         Response.ResponseBuilder responseBuilder = Response.noContent();
-        List<String> replacements = new ArrayList<>();
-        replacements.add("localhost");
-        replacements.add("3");
-        location("{basePath}/import-status/{job-id}/{job-id}", "{basePath}", "{job-id}")
-                .modify(responseBuilder, new HashModel().update(LocationModifier.KEY, replacements));
 
-        assertEquals(URI.create("localhost/import-status/3/3"), responseBuilder.build().getMetadata().get("location").get(0));
+        location("import-status", "{r0}", "{r1}")
+                .modify(responseBuilder, new HashModel().update(LocationModifier.KEY,
+                        locationBuilder(UriBuilder.fromUri("http://host:1234")).put("{r0}", "3").put("{r1}", "4")));
+
+        assertEquals(URI.create("http://host:1234/import-status/3/4"), responseBuilder.build().getMetadata().get("location").get(0));
+    }
+
+    @Test
+    public void generatesSpec() throws Exception {
+        HashMap spec = new HashMap();
+
+        location("import-status", "{r0}", "{r1}")
+                .spec(spec);
+
+        assertEquals(mapOf("location", "{base}/import-status/{r0}/{r1}"), spec);
     }
 }

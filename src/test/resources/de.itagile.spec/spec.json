@@ -19,7 +19,7 @@
             },
             {
               "status-code": 301,
-              "location": "/items/{path}/?p=1",
+              "location": "{base}/items/{path}",
               "max-age": {
                 "duration": 5,
                 "time-unit": "SECONDS"

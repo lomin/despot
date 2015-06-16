@@ -48,7 +48,7 @@ public class ApiTest {
                         write_error_msg(), status(404), MediaTypeTest.ERROR_MEDIA_TYPE).
                 next(
                         OPS.and(is_invalid_uri(), is_manual_redirect_possible()),
-                        manual_redirect(), status(301), maxAge(5, SECONDS), location("/items/{path}/?p=1", "{path}")).
+                        manual_redirect(), status(301), maxAge(5, SECONDS), location("/items".split("/"), "{path}")).
                 next(
                         pre(OPS.not(is_partial_menu())).
                                 next(
