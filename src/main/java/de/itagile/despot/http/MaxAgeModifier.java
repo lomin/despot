@@ -39,7 +39,7 @@ public class MaxAgeModifier implements ResponseModifier {
     @Override
     public void spec(Map<String, Object> spec) {
         Map<String, Object> map = new HashMap<>();
-        map.put("duration", duration);
+        map.put("duration", "" + duration);
         map.put("time-unit", timeUnit.name());
         spec.put(KEY, map);
     }

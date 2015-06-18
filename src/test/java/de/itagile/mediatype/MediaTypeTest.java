@@ -93,7 +93,7 @@ public class MediaTypeTest {
         variationId.put("name", "variationId");
         Map variationIdType = new HashMap();
         variationIdType.put("name", "String");
-        variationIdType.put("required", true);
+        variationIdType.put("required", "true");
         variationId.put("type", variationIdType);
         fields.add(variationId);
 

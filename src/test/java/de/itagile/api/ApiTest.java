@@ -39,6 +39,7 @@ import static org.mockito.Mockito.verify;
 public class ApiTest {
 
     public static final Operations<IProductSearchParams> OPS = operations(IProductSearchParams.class);
+    public static final String SPEC_PATH = "/de.itagile.spec/spec.json";
     private final Verifier verifier = mock(Verifier.class);
 
     private static Despot<IProductSearchParams> PRODUCT_SEARCH_API() {
@@ -60,7 +61,7 @@ public class ApiTest {
                 last(redirect_to_first_page(), status(301)).
                 error(RedirectException.class, write_error_msg(), status(503)).
                 error(NullPointerException.class, status(503))
-                .verify("/de.itagile.spec/spec.json");
+                .verify(SPEC_PATH, SPEC_PATH);
     }
 
     @Test
@@ -77,7 +78,7 @@ public class ApiTest {
     @Test
     public void fulfillsTheFullSpec() throws Exception {
         Despot<IProductSearchParams> api = PRODUCT_SEARCH_API();
-        assertEquals(api, api.verify("/de.itagile.spec/spec.json"));
+        assertEquals(api, api.verify(SPEC_PATH, SPEC_PATH));
     }
 
     @Test
@@ -87,7 +88,7 @@ public class ApiTest {
                         is_invalid_page(),
                         redirect_to_first_page(), status(301));
 
-        verify(verifier).add(mapOf(StatusModifier.KEY, 301L));
+        verify(verifier).add(mapOf(StatusModifier.KEY, "301"));
     }
 
     @Test
@@ -97,7 +98,7 @@ public class ApiTest {
                         is_invalid_page(),
                         redirect_to_first_page(), status(200), new JsonMediaType("test-mediatype"));
 
-        verify(verifier).add(mapOf(StatusModifier.KEY, 200L, "produces", mapOf("name", "test-mediatype", "fields", new HashSet<>())));
+        verify(verifier).add(mapOf(StatusModifier.KEY, "200", "produces", mapOf("name", "test-mediatype", "fields", new HashSet<>())));
     }
 
     @Test
@@ -109,7 +110,7 @@ public class ApiTest {
                                         is_result_ok(),
                                         full_response(), status(503), new JsonMediaType("error")));
 
-        verify(verifier).add(mapOf(StatusModifier.KEY, 503L, "produces", mapOf("name", "error", "fields", new HashSet<>())));
+        verify(verifier).add(mapOf(StatusModifier.KEY, "503", "produces", mapOf("name", "error", "fields", new HashSet<>())));
     }
 
     @Test

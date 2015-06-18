@@ -8,8 +8,11 @@ import de.itagile.model.Model;
 import javax.ws.rs.core.Response;
 import java.util.*;
 
+import static java.util.Collections.emptyIterator;
+
 public class MediaType<T, FormatType extends Format<T>> implements Iterable<FormatType>, EntityFactory<T>, ResponseModifier {
 
+    public static final String KEY = "produces";
     private final Set<FormatType> mediaTypes = new HashSet<>();
     private final String name;
     private final EntityFactory<T> entityFactory;
@@ -18,6 +21,15 @@ public class MediaType<T, FormatType extends Format<T>> implements Iterable<Form
         this.name = name;
         this.entityFactory = entityFactory;
         this.mediaTypes.addAll(Arrays.asList(types));
+    }
+
+    public static DespotSpecParser.NodeFactory createNode(final Map mediaTypeSpec) {
+        return new DespotSpecParser.NodeFactory() {
+            @Override
+            public DespotSpecParser.Node create(Map<String, Object> result, Object value, DespotSpecParser.NodeFactoryMap extensionFields) {
+                return new MediaTypeNode(result, value.toString(), mediaTypeSpec, KEY);
+            }
+        };
     }
 
     public T modify(Model source) {
@@ -86,6 +98,48 @@ public class MediaType<T, FormatType extends Format<T>> implements Iterable<Form
 
     @Override
     public void spec(Map<String, Object> spec) {
-        spec.put(DespotSpecParser.MEDIATYPE, getSpec());
+        spec.put(KEY, getSpec());
+    }
+
+    public static class MediaTypeNode implements DespotSpecParser.Node {
+        private final Map<String, Object> parent;
+        private final Map mediaTypeSpec;
+        private final String key;
+        private String value;
+
+        public MediaTypeNode(Map<String, Object> parent, String value, Map mediaTypeSpec, String key) {
+            this.parent = parent;
+            this.value = value;
+            this.mediaTypeSpec = mediaTypeSpec;
+            this.key = key;
+        }
+
+        @Override
+        public void call() {
+            Set<Map> mediatypes = (Set) mediaTypeSpec.get("mediatypes");
+            Map mediaType = findMediaTypeByName(value, mediatypes);
+            if (Collections.emptyMap().equals(mediaType)) {
+                parent.put(key, value);
+            } else {
+                parent.put(key, mediaType);
+            }
+        }
+
+        private Map findMediaTypeByName(String name, Set<Map> mediatypes) {
+            if (mediatypes == null) {
+                return Collections.emptyMap();
+            }
+            for (Map mediatype : mediatypes) {
+                if (name.equals(mediatype.get("name"))) {
+                    return mediatype;
+                }
+            }
+            return Collections.emptyMap();
+        }
+
+        @Override
+        public Iterator<DespotSpecParser.Node> iterator() {
+            return emptyIterator();
+        }
     }
 }

@@ -33,7 +33,6 @@
               "status-code": 503,
               "__description__": "If the redirect cannot be performed."
             }
-
           ]
         }
       ]
@@ -57,17 +56,57 @@
     {
       "name": "application/vnd.itagile.product+json",
       "fields": [
-        "productId",
-        "name",
-        "variations"
+        {
+          "name": "productId",
+          "type": {
+            "name": "String",
+            "required": true
+          }
+        },
+        {
+          "name": "name",
+          "type": {
+            "name": "String"
+          }
+        },
+        {
+          "name": "variations",
+          "type": {
+            "name": "MediaTypeSet",
+            "mediatype": "application/vnd.itagile.variation+json"
+          }
+        }
       ]
     },
     {
       "name": "application/vnd.itagile.variation+json",
       "fields": [
-        "variationId",
-        "availability",
-        "price"
+        {
+          "name": "variationId",
+          "type": {
+            "name": "String",
+            "required": true
+          }
+        },
+        {
+          "name": "availability",
+          "type": {
+            "name": "Enum",
+            "subtype": "String",
+            "values": [
+              "AVAILABLE",
+              "DELAYED",
+              "SOLDOUT"
+            ],
+            "default": "AVAILABLE"
+          }
+        },
+        {
+          "name": "price",
+          "type": {
+            "name": "Integer"
+          }
+        }
       ]
     },
     {
@@ -80,54 +119,6 @@
           }
         }
       ]
-    }
-  ],
-  "fields": [
-    {
-      "name": "productId",
-      "type": {
-        "name": "String",
-        "required": true
-      }
-    },
-    {
-      "name": "name",
-      "type": {
-        "name": "String"
-      }
-    },
-    {
-      "name": "variationId",
-      "type": {
-        "name": "String",
-        "required": true
-      }
-    },
-    {
-      "name": "availability",
-      "type": {
-        "name": "Enum",
-        "subtype": "String",
-        "values": [
-          "AVAILABLE",
-          "DELAYED",
-          "SOLDOUT"
-        ],
-        "default": "AVAILABLE"
-      }
-    },
-    {
-      "name": "price",
-      "type": {
-        "name": "Integer"
-      }
-    },
-    {
-      "name": "variations",
-      "type": {
-        "name": "MediaTypeSet",
-        "mediatype": "application/vnd.itagile.variation+json"
-      }
     }
   ]
 }

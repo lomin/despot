@@ -1,5 +1,6 @@
 package de.itagile.despot;
 
+import de.itagile.despot.http.ConsumesSpecified;
 import de.itagile.despot.http.MethodSpecified;
 import de.itagile.model.HashModel;
 import de.itagile.model.Key;
@@ -29,6 +30,7 @@ public class Despot<ParamType> {
     private Method method = Method.GET;
     private DespotSpecParser specParser = new DespotSpecParser();
     private List<ErrorResponse> errorResponses = new ArrayList<>();
+    private ConsumesSpecified.Consumes consumes = ConsumesSpecified.consumesNone();
 
     public Despot(Verifier verifier, String uri, Method method) {
         this.verifier = verifier;
@@ -40,13 +42,25 @@ public class Despot<ParamType> {
         this.verifier = new DespotVerifier();
     }
 
-    public static <T> Despot<T> despot(Class<T> ignore, String uri, Method method, Specified... additionalSpecification) {
+    public static <T> Despot<T> despot(Class<T> ignore, String uri, Method method, ConsumesSpecified.Consumes consumes, Specified... additionalSpecification) {
         Despot<T> despot = new Despot<>();
         despot.endpoint = uri;
         despot.method = method;
+        despot.consumes = consumes;
         despot.additionalSpecifications.addAll(Arrays.asList(additionalSpecification));
         despot.additionalSpecifications.add(MethodSpecified.method(method));
+        despot.additionalSpecifications.add(uriSpecified(uri));
+        despot.additionalSpecifications.add(consumes);
         return despot;
+    }
+
+    private static Specified uriSpecified(final String uri) {
+        return new Specified() {
+            @Override
+            public void spec(Map<String, Object> spec) {
+                spec.put("uri", uri);
+            }
+        };
     }
 
     public static <ParamType> PreDespot<ParamType> pre(PredicateFactory<? super ParamType> specification) {
@@ -141,10 +155,10 @@ public class Despot<ParamType> {
         return responseBuilder.build();
     }
 
-    public Despot<ParamType> verify(String path) {
+    public Despot<ParamType> verify(String path, String mediaTypePath) {
         Set<Map<String, Object>> canonicalSpec;
         try {
-            canonicalSpec = specParser.getSpec(method, endpoint, getClass().getResourceAsStream(path));
+            canonicalSpec = specParser.getSpec(method, endpoint, consumes, getClass().getResourceAsStream(path), getClass().getResourceAsStream(mediaTypePath));
         } catch (IOException e) {
             throw new RuntimeException("Could not find <" + path + "> on classpath.");
         } catch (ParseException e) {

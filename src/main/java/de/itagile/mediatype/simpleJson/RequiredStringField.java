@@ -30,7 +30,7 @@ public class RequiredStringField<T> implements Key<T>, JsonFormat {
         spec.put("name", name);
         Map type = new HashMap();
         type.put("name", "String");
-        type.put("required", true);
+        type.put("required", "true");
         spec.put("type", type);
     }
 }

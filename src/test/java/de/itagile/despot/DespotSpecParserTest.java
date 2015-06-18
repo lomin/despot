@@ -3,11 +3,14 @@ package de.itagile.despot;
 import org.junit.Test;
 
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
 import static de.itagile.despot.CollectionUtil.mapOf;
 import static de.itagile.despot.CollectionUtil.setOf;
+import static de.itagile.despot.http.ConsumesSpecified.consumes;
+import static de.itagile.despot.http.ConsumesSpecified.consumesNone;
 import static org.junit.Assert.assertEquals;
 
 public class DespotSpecParserTest {
@@ -16,32 +19,35 @@ public class DespotSpecParserTest {
 
     @Test
     public void returnsAllResponseCombinationIfEndpointAndMethodMatches() throws Exception {
-        Set<Map<String, Object>> spec = parser.getSpec(Method.GET, "/items/{path}", getStream());
+        Set<Map<String, Object>> spec = parser.getSpec(Method.GET, "/items/{path}", consumes("application/x-www-form-urlencoded"), getStream());
 
         assertEquals(5, spec.size());
     }
 
     @Test
     public void returnsNoResponseCombinationIfEndpointDoesNotMatch() throws Exception {
-        Set<Map<String, Object>> spec = parser.getSpec(Method.GET, "/UNKNOWN", getStream());
+        Set<Map<String, Object>> spec = parser.getSpec(Method.GET, "/UNKNOWN", consumes("application/x-www-form-urlencoded"), getStream());
 
         assertEquals(0, spec.size());
     }
 
     @Test
     public void returnsNoResponseCombinationIfMethodtDoesNotMatch() throws Exception {
-        Set<Map<String, Object>> spec = parser.getSpec(Method.POST, "/items/{path}", getStream());
+        Set<Map<String, Object>> spec = parser.getSpec(Method.POST, "/items/{path}", consumesNone(), getStream());
 
         assertEquals(0, spec.size());
     }
 
     @Test
     public void expandsMediaTypeInSpec() throws Exception {
-        Set<Map<String, Object>> spec = parser.getSpec(Method.GET, "/NOT_ALLOWED", getStream());
+        Set<Map<String, Object>> spec = parser.getSpec(Method.GET, "/NOT_ALLOWED", consumesNone(), getStream());
 
         assertEquals(mapOf(
                 "method", "GET",
-                "status_code", 405L,
+                "uri", "/NOT_ALLOWED",
+                "method", "GET",
+                "consumes", "NONE",
+                "status_code", "405",
                 "produces", mapOf(
                         "name", "application/vnd.itagile.error+json",
                         "fields", setOf(
@@ -53,7 +59,7 @@ public class DespotSpecParserTest {
     }
 
     @Test
-    public void transformsToStringMap() throws Exception {
+    public void normalizesMap() throws Exception {
         Map<String, Object> input = mapOf(
                 "method", "GET",
                 "status_code", 405L,
@@ -75,7 +81,86 @@ public class DespotSpecParserTest {
                                         "type", mapOf("name", "String"))
                         )));
 
-        assertEquals(expected, parser.toStringMap(input));
+        assertEquals(expected, parser.normalize(input));
+    }
+
+    @Test
+    public void expandsMap() throws Exception {
+        Map<String, Object> input =
+                mapOf(
+                        "endpoints", setOf(
+                                mapOf(
+                                        "uri", "/items/{path}",
+                                        "methods", setOf(mapOf(
+                                                        "__description__", "ignore",
+                                                        "method", "GET",
+                                                        "consumes", "application/x-www-form-urlencoded",
+                                                        "responses", setOf(
+                                                                mapOf(
+                                                                        "status-code", "200",
+                                                                        "produces", "application/vnd.itagile.product+json",
+                                                                        "__description__", "ignore"),
+                                                                mapOf(
+                                                                        "status-code", "301",
+                                                                        "__description__", "ignore",
+                                                                        "location", "{base}/items/{path}",
+                                                                        "max-age", mapOf(
+                                                                                "duration", "5",
+                                                                                "time-unit", "SECONDS"))))
+                                        )),
+                                mapOf(
+                                        "uri", "/items2/{path}",
+                                        "methods", setOf(mapOf(
+                                                        "__description__", "ignore",
+                                                        "method", "GET",
+                                                        "consumes", "application/x-www-form-urlencoded",
+                                                        "responses", setOf(
+                                                                mapOf(
+                                                                        "status-code", "200",
+                                                                        "produces", "application/vnd.itagile.product+json",
+                                                                        "__description__", "ignore"),
+                                                                mapOf(
+                                                                        "status-code", "301",
+                                                                        "__description__", "ignore",
+                                                                        "location", "{base}/items/{path}",
+                                                                        "max-age", mapOf(
+                                                                                "duration", "5",
+                                                                                "time-unit", "SECONDS"))))
+                                        ))));
+
+        Set<Map<String, Object>> expected = setOf(
+                mapOf(
+                        "uri", "/items/{path}",
+                        "method", "GET",
+                        "consumes", "application/x-www-form-urlencoded",
+                        "status-code", "200",
+                        "produces", "application/vnd.itagile.product+json"),
+                mapOf(
+                        "uri", "/items/{path}",
+                        "method", "GET",
+                        "consumes", "application/x-www-form-urlencoded",
+                        "status-code", "301",
+                        "location", "{base}/items/{path}",
+                        "max-age", mapOf(
+                                "duration", "5",
+                                "time-unit", "SECONDS")),
+                mapOf(
+                        "uri", "/items2/{path}",
+                        "method", "GET",
+                        "consumes", "application/x-www-form-urlencoded",
+                        "status-code", "200",
+                        "produces", "application/vnd.itagile.product+json"),
+                mapOf(
+                        "uri", "/items2/{path}",
+                        "method", "GET",
+                        "consumes", "application/x-www-form-urlencoded",
+                        "status-code", "301",
+                        "location", "{base}/items/{path}",
+                        "max-age", mapOf(
+                                "duration", "5",
+                                "time-unit", "SECONDS")));
+
+        assertEquals(expected, parser.expand(input, Collections.emptyMap()));
     }
 
     private InputStream getStream() {

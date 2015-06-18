@@ -20,7 +20,7 @@ public class StatusModifier implements ResponseModifier {
 
     @Override
     public void spec(Map spec) {
-        spec.put(KEY, status.longValue());
+        spec.put(KEY, status.toString());
     }
 
     @Override
