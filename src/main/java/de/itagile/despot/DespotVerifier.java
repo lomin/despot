@@ -9,7 +9,7 @@ public class DespotVerifier implements Verifier {
 
     @Override
     public void add(Map<String, Object> spec) {
-        specs.add(spec);
+        specs.add(DespotSpecParser.normalize(spec));
     }
 
     @Override

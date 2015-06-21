@@ -3,6 +3,7 @@ package de.itagile.mediatype;
 import de.itagile.despot.DespotSpecParser;
 import de.itagile.despot.EntityFactory;
 import de.itagile.despot.ResponseModifier;
+import de.itagile.despot.Specified;
 import de.itagile.model.Model;
 
 import javax.ws.rs.core.Response;
@@ -12,7 +13,8 @@ import static java.util.Collections.emptyIterator;
 
 public class MediaType<T, FormatType extends Format<T>> implements Iterable<FormatType>, EntityFactory<T>, ResponseModifier {
 
-    public static final String KEY = "produces";
+    public static final String KEY_PRODUCES = "produces";
+    public static final String KEY_CONSUMES = "consumes";
     private final Set<FormatType> mediaTypes = new HashSet<>();
     private final String name;
     private final EntityFactory<T> entityFactory;
@@ -21,15 +23,6 @@ public class MediaType<T, FormatType extends Format<T>> implements Iterable<Form
         this.name = name;
         this.entityFactory = entityFactory;
         this.mediaTypes.addAll(Arrays.asList(types));
-    }
-
-    public static DespotSpecParser.NodeFactory createNode(final Map mediaTypeSpec) {
-        return new DespotSpecParser.NodeFactory() {
-            @Override
-            public DespotSpecParser.Node create(Map<String, Object> result, Object value, DespotSpecParser.NodeFactoryMap extensionFields) {
-                return new MediaTypeNode(result, value.toString(), mediaTypeSpec, KEY);
-            }
-        };
     }
 
     @SuppressWarnings("unchecked")
@@ -47,6 +40,73 @@ public class MediaType<T, FormatType extends Format<T>> implements Iterable<Form
             }
         }
         return Collections.emptyMap();
+    }
+
+    public static DespotSpecParser.Transformation createConsumesTransformation() {
+        return new DespotSpecParser.Transformation() {
+            @Override
+            public Map<String, Object> transform(Map<String, Object> spec) {
+                if (!spec.containsKey(KEY_CONSUMES)) {
+                    spec.put(KEY_CONSUMES, consumesNone().name());
+                }
+                return spec;
+            }
+        };
+    }
+
+    public static DespotSpecParser.NodeFactory createNode(final Map mediaTypeSpec, final String key) {
+        return new DespotSpecParser.NodeFactory() {
+            @Override
+            public DespotSpecParser.Node create(Map<String, Object> result, Object value, DespotSpecParser.NodeFactoryMap extensionFields) {
+                return new MediaTypeNode(result, value.toString(), mediaTypeSpec, key);
+            }
+        };
+    }
+
+    public static Consumes consumesNone() {
+        return new Consumes() {
+            @Override
+            public String name() {
+                return "NONE";
+            }
+
+            @Override
+            public void spec(Map<String, Object> spec) {
+                spec.put(KEY_CONSUMES, name());
+            }
+        };
+    }
+
+    public static Consumes consumes(final javax.ws.rs.core.MediaType mediaType) {
+        return consumes(mediaType.toString());
+    }
+
+    public static Consumes consumes(final MediaType mediaType) {
+        return new Consumes() {
+            @Override
+            public String name() {
+                return mediaType.getName();
+            }
+
+            @Override
+            public void spec(Map<String, Object> spec) {
+                spec.put(KEY_CONSUMES, mediaType.getSpec());
+            }
+        };
+    }
+
+    public static Consumes consumes(final String mediaType) {
+        return new Consumes() {
+            @Override
+            public String name() {
+                return mediaType;
+            }
+
+            @Override
+            public void spec(Map<String, Object> spec) {
+                spec.put(KEY_CONSUMES, name());
+            }
+        };
     }
 
     public T modify(Model source) {
@@ -115,7 +175,11 @@ public class MediaType<T, FormatType extends Format<T>> implements Iterable<Form
 
     @Override
     public void spec(Map<String, Object> spec) {
-        spec.put(KEY, getSpec());
+        spec.put(KEY_PRODUCES, getSpec());
+    }
+
+    public interface Consumes extends Specified {
+        String name();
     }
 
     public static class MediaTypeNode implements DespotSpecParser.Node {

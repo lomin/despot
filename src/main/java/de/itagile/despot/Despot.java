@@ -1,7 +1,7 @@
 package de.itagile.despot;
 
-import de.itagile.despot.http.ConsumesSpecified;
 import de.itagile.despot.http.MethodSpecified;
+import de.itagile.mediatype.MediaType;
 import de.itagile.model.HashModel;
 import de.itagile.model.Key;
 import de.itagile.model.Model;
@@ -30,7 +30,7 @@ public class Despot<ParamType> {
     private Method method = Method.GET;
     private DespotSpecParser specParser = new DespotSpecParser();
     private List<ErrorResponse> errorResponses = new ArrayList<>();
-    private ConsumesSpecified.Consumes consumes = ConsumesSpecified.consumesNone();
+    private MediaType.Consumes consumes = MediaType.consumesNone();
 
     public Despot(Verifier verifier, String uri, Method method) {
         this.verifier = verifier;
@@ -42,7 +42,7 @@ public class Despot<ParamType> {
         this.verifier = new DespotVerifier();
     }
 
-    public static <T> Despot<T> despot(Class<T> ignore, String uri, Method method, ConsumesSpecified.Consumes consumes, Specified... additionalSpecification) {
+    public static <T> Despot<T> despot(Class<T> ignore, String uri, Method method, MediaType.Consumes consumes, Specified... additionalSpecification) {
         Despot<T> despot = new Despot<>();
         despot.endpoint = uri;
         despot.method = method;

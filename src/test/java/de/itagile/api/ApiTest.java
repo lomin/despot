@@ -25,7 +25,7 @@ import static de.itagile.api.WriteErrorMsg.write_error_msg;
 import static de.itagile.despot.CollectionUtil.mapOf;
 import static de.itagile.despot.Despot.despot;
 import static de.itagile.despot.Despot.pre;
-import static de.itagile.despot.http.ConsumesSpecified.consumes;
+import static de.itagile.mediatype.MediaType.consumes;
 import static de.itagile.despot.http.LocationModifier.location;
 import static de.itagile.despot.http.MaxAgeModifier.maxAge;
 import static de.itagile.despot.http.StatusModifier.status;

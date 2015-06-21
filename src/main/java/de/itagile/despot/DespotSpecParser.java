@@ -1,6 +1,5 @@
 package de.itagile.despot;
 
-import de.itagile.despot.http.ConsumesSpecified;
 import de.itagile.mediatype.MediaType;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -78,23 +77,23 @@ public class DespotSpecParser {
         };
     }
 
-    public Set<Map<String, Object>> getSpec(Method method, String uri, ConsumesSpecified.Consumes consumes, InputStream stream) throws IOException, ParseException {
+    public Set<Map<String, Object>> getSpec(Method method, String uri, MediaType.Consumes consumes, InputStream stream) throws IOException, ParseException {
         Map completeSpec = (Map) new JSONParser().parse(new InputStreamReader(stream));
         return getSpec(method, uri, consumes, completeSpec, completeSpec);
     }
 
-    public Set<Map<String, Object>> getSpec(Method method, String uri, ConsumesSpecified.Consumes consumes, InputStream specStream, InputStream mediaTypeSpecStream) throws IOException, ParseException {
+    public Set<Map<String, Object>> getSpec(Method method, String uri, MediaType.Consumes consumes, InputStream specStream, InputStream mediaTypeSpecStream) throws IOException, ParseException {
         Map completeSpec = (Map) new JSONParser().parse(new InputStreamReader(specStream));
         Map mediaTypeSpec = (Map) new JSONParser().parse(new InputStreamReader(mediaTypeSpecStream));
         return getSpec(method, uri, consumes, completeSpec, mediaTypeSpec);
     }
 
-    private Set<Map<String, Object>> getSpec(Method method, String uri, ConsumesSpecified.Consumes consumes, Map completeSpec, Map mediaTypeSpec) {
+    private Set<Map<String, Object>> getSpec(Method method, String uri, MediaType.Consumes consumes, Map completeSpec, Map mediaTypeSpec) {
         completeSpec = normalize(completeSpec);
         mediaTypeSpec = normalize(mediaTypeSpec);
         Set result = expand(completeSpec, mediaTypeSpec);
         Set<Transformation> transformations = new HashSet<>();
-        transformations.add(ConsumesSpecified.createTransformation());
+        transformations.add(MediaType.createConsumesTransformation());
         return filter(transform(result, transformations), method, uri, consumes, mediaTypeSpec);
     }
 
@@ -109,7 +108,7 @@ public class DespotSpecParser {
         return result;
     }
 
-    private Set<Map<String, Object>> filter(Set<Map<String, Object>> input, Method method, String uri, ConsumesSpecified.Consumes consumes, Map mediaTypeSpec) {
+    private Set<Map<String, Object>> filter(Set<Map<String, Object>> input, Method method, String uri, MediaType.Consumes consumes, Map mediaTypeSpec) {
         Set<Map<String, Object>> result = new HashSet<>(input);
         Iterator<Map<String, Object>> iterator = result.iterator();
         while (iterator.hasNext()) {
@@ -118,29 +117,29 @@ public class DespotSpecParser {
                 iterator.remove();
             } else if (!uri.equals(spec.get(URI))) {
                 iterator.remove();
-            } else if (!matchesMediaTypeNames(consumes, spec.get(ConsumesSpecified.KEY))
-                    && !matchesCompleteMediaTypes(consumes, mediaTypeSpec, spec.get(ConsumesSpecified.KEY))) {
+            } else if (!matchesMediaTypeNames(consumes, spec.get(MediaType.KEY_CONSUMES))
+                    && !matchesCompleteMediaTypes(consumes, mediaTypeSpec, spec.get(MediaType.KEY_CONSUMES))) {
                 iterator.remove();
             }
         }
         return result;
     }
 
-    private boolean matchesCompleteMediaTypes(ConsumesSpecified.Consumes consumes, Map mediaTypeSpec, Object actualConsumesSpec) {
+    private boolean matchesCompleteMediaTypes(MediaType.Consumes consumes, Map mediaTypeSpec, Object actualConsumesSpec) {
         return actualConsumesSpec.equals(findMediaTypeByName(consumes.name(), mediaTypeSpec));
     }
 
-    private boolean matchesMediaTypeNames(ConsumesSpecified.Consumes consumes, Object actualConsumesSpec) {
+    private boolean matchesMediaTypeNames(MediaType.Consumes consumes, Object actualConsumesSpec) {
         return consumes.name().equals(actualConsumesSpec);
     }
 
-    public Map<String, Object> normalize(Map<String, Object> input) {
+    public static Map<String, Object> normalize(Map<String, Object> input) {
         RootEntry root = new RootEntry(input);
         walk(root);
         return root.result();
     }
 
-    private void walk(Node root) {
+    private static void walk(Node root) {
         Deque<Node> commands = new ArrayDeque<>();
         Deque<Node> inputQueue = new ArrayDeque<>();
         inputQueue.add(root);
@@ -160,8 +159,8 @@ public class DespotSpecParser {
         NodeFactoryMap extensionFields = new NodeFactoryMap();
         extensionFields.put(ENDPOINTS, ExpandNode.create(ENDPOINTS, METHODS));
         extensionFields.put(METHODS, ExpandNode.create(METHODS, RESPONSES));
-        extensionFields.put(ConsumesSpecified.KEY, ConsumesSpecified.createNode(mediaTypeSpec));
-        extensionFields.put(MediaType.KEY, MediaType.createNode(mediaTypeSpec));
+        extensionFields.put(MediaType.KEY_CONSUMES, MediaType.createNode(mediaTypeSpec, MediaType.KEY_CONSUMES));
+        extensionFields.put(MediaType.KEY_PRODUCES, MediaType.createNode(mediaTypeSpec, MediaType.KEY_PRODUCES));
         ExpandRoot root = new ExpandRoot(input, extensionFields);
         walk(root);
         return root.result();
@@ -381,7 +380,7 @@ public class DespotSpecParser {
         }
     }
 
-    private class RootEntry implements Node {
+    private static class RootEntry implements Node {
         private final Map map;
         private final Map result;
         private final NodeFactoryMap extensionFields;

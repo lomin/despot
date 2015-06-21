@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class MediaTypeSetField implements Key<Set<Model>>, JsonFormat {
+    public static final Set<Model> UNDEFINED = new HashSet<>();
     private final String name;
     private final MediaType<JSONObject, JsonFormat> mediaType;
 
@@ -21,19 +22,19 @@ public class MediaTypeSetField implements Key<Set<Model>>, JsonFormat {
 
     @Override
     public Set<Model> getUndefined() {
-        return null;
+        return UNDEFINED;
     }
 
     @Override
     public void transform(Model e, JSONObject result) {
         Set<Model> entities = e.get(this);
-        if (entities == null) return;
+        if (entities == UNDEFINED) return;
         Set set = new HashSet<>();
-        result.put(name, set);
         for (Model entity : entities) {
             JSONObject kv = mediaType.modify(entity);
             set.add(kv);
         }
+        result.put(name, set);
     }
 
     @Override

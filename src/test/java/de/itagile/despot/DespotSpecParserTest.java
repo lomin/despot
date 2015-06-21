@@ -9,8 +9,8 @@ import java.util.Set;
 
 import static de.itagile.despot.CollectionUtil.mapOf;
 import static de.itagile.despot.CollectionUtil.setOf;
-import static de.itagile.despot.http.ConsumesSpecified.consumes;
-import static de.itagile.despot.http.ConsumesSpecified.consumesNone;
+import static de.itagile.mediatype.MediaType.consumes;
+import static de.itagile.mediatype.MediaType.consumesNone;
 import static org.junit.Assert.assertEquals;
 
 public class DespotSpecParserTest {

@@ -1,6 +1,5 @@
 package de.itagile.mediatype.simpleJson;
 
-import de.itagile.mediatype.simpleJson.JsonFormat;
 import de.itagile.model.Key;
 import de.itagile.model.Model;
 import org.json.simple.JSONObject;
@@ -9,6 +8,7 @@ import java.util.*;
 
 public class EnumSetField<T extends Enum> implements Key<Set<T>>, JsonFormat {
 
+    public static final Set UNDEFINED = new HashSet<>();
     private final String name;
     private final T undefined;
     private final Collection<T> keys;
@@ -23,7 +23,7 @@ public class EnumSetField<T extends Enum> implements Key<Set<T>>, JsonFormat {
     @Override
     public void transform(Model e, JSONObject result) {
         Set<T> entities = e.get(this);
-        if (entities == null) return;
+        if (entities == UNDEFINED) return;
         Set set = new HashSet();
         for (T entity : entities) {
             if (!keys.contains(entity)) {
@@ -40,7 +40,7 @@ public class EnumSetField<T extends Enum> implements Key<Set<T>>, JsonFormat {
         type.put("default", this.undefined.toString());
         type.put("name", "EnumSet");
         type.put("subtype", "String");
-        List<String> values = new ArrayList<>();
+        Set<String> values = new HashSet<>();
         for (T key : keys) {
             values.add(key.name());
         }
@@ -50,8 +50,9 @@ public class EnumSetField<T extends Enum> implements Key<Set<T>>, JsonFormat {
         spec.put("type", type);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Set<T> getUndefined() {
-        return null;
+        return UNDEFINED;
     }
 }

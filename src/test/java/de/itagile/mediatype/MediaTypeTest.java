@@ -121,10 +121,19 @@ public class MediaTypeTest {
         htmlSpec.put("fields", fields);
 
         assertEquals(htmlSpec, VARIATION_MEDIA_TYPE.getSpec());
-
     }
 
-    public static enum Availability {
+    @Test
+    public void addsConsumes() throws Exception {
+        final Map<String, Object> spec = new HashMap<>();
+
+        de.itagile.mediatype.MediaType.consumes(javax.ws.rs.core.MediaType.TEXT_HTML_TYPE).spec(spec);
+
+        assertEquals("text/html", spec.get("consumes"));
+    }
+
+
+    public enum Availability {
         AVAILABLE, DELAYED, SOLDOUT, FORBIDDEN
     }
 
