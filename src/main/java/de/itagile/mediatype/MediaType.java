@@ -32,6 +32,23 @@ public class MediaType<T, FormatType extends Format<T>> implements Iterable<Form
         };
     }
 
+    @SuppressWarnings("unchecked")
+    public static Map findMediaTypeByName(String name, Map mediaTypeSpec) {
+        return findMediaTypeByName(name, (Set) mediaTypeSpec.get("mediatypes"));
+    }
+
+    public static Map findMediaTypeByName(String name, Set<Map> mediatypes) {
+        if (mediatypes == null) {
+            return Collections.emptyMap();
+        }
+        for (Map mediatype : mediatypes) {
+            if (name.equals(mediatype.get("name"))) {
+                return mediatype;
+            }
+        }
+        return Collections.emptyMap();
+    }
+
     public T modify(Model source) {
         T target = create();
         for (Format<T> key : this) {
@@ -123,18 +140,6 @@ public class MediaType<T, FormatType extends Format<T>> implements Iterable<Form
             } else {
                 parent.put(key, mediaType);
             }
-        }
-
-        private Map findMediaTypeByName(String name, Set<Map> mediatypes) {
-            if (mediatypes == null) {
-                return Collections.emptyMap();
-            }
-            for (Map mediatype : mediatypes) {
-                if (name.equals(mediatype.get("name"))) {
-                    return mediatype;
-                }
-            }
-            return Collections.emptyMap();
         }
 
         @Override

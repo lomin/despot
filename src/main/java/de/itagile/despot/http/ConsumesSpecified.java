@@ -5,6 +5,7 @@ import de.itagile.despot.Specified;
 import de.itagile.mediatype.MediaType.MediaTypeNode;
 
 import javax.ws.rs.core.MediaType;
+import java.util.HashMap;
 import java.util.Map;
 
 public class ConsumesSpecified {

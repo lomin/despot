@@ -34,6 +34,17 @@
               "__description__": "If the redirect cannot be performed."
             }
           ]
+        },
+        {
+          "__description__": "Description for /items/{path}",
+          "method": "POST",
+          "consumes": "application/vnd.itagile.product+json",
+          "responses": [
+            {
+              "status-code": 200,
+              "__description__": "Returns a single product."
+            }
+          ]
         }
       ]
     },

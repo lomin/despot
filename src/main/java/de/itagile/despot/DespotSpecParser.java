@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
 
+import static de.itagile.mediatype.MediaType.findMediaTypeByName;
 import static java.util.Collections.emptyIterator;
 
 @SuppressWarnings("unchecked")
@@ -89,10 +90,12 @@ public class DespotSpecParser {
     }
 
     private Set<Map<String, Object>> getSpec(Method method, String uri, ConsumesSpecified.Consumes consumes, Map completeSpec, Map mediaTypeSpec) {
-        Set result = expand(normalize(completeSpec), normalize(mediaTypeSpec));
+        completeSpec = normalize(completeSpec);
+        mediaTypeSpec = normalize(mediaTypeSpec);
+        Set result = expand(completeSpec, mediaTypeSpec);
         Set<Transformation> transformations = new HashSet<>();
         transformations.add(ConsumesSpecified.createTransformation());
-        return filter(transform(result, transformations), method, uri, consumes);
+        return filter(transform(result, transformations), method, uri, consumes, mediaTypeSpec);
     }
 
     private Set<Map<String, Object>> transform(Set<Map<String, Object>> input, Set<Transformation> transformations) {
@@ -106,7 +109,7 @@ public class DespotSpecParser {
         return result;
     }
 
-    private Set<Map<String, Object>> filter(Set<Map<String, Object>> input, Method method, String uri, ConsumesSpecified.Consumes consumes) {
+    private Set<Map<String, Object>> filter(Set<Map<String, Object>> input, Method method, String uri, ConsumesSpecified.Consumes consumes, Map mediaTypeSpec) {
         Set<Map<String, Object>> result = new HashSet<>(input);
         Iterator<Map<String, Object>> iterator = result.iterator();
         while (iterator.hasNext()) {
@@ -115,11 +118,20 @@ public class DespotSpecParser {
                 iterator.remove();
             } else if (!uri.equals(spec.get(URI))) {
                 iterator.remove();
-            } else if (!consumes.name().equals(spec.get(ConsumesSpecified.KEY))) {
+            } else if (!matchesMediaTypeNames(consumes, spec.get(ConsumesSpecified.KEY))
+                    && !matchesCompleteMediaTypes(consumes, mediaTypeSpec, spec.get(ConsumesSpecified.KEY))) {
                 iterator.remove();
             }
         }
         return result;
+    }
+
+    private boolean matchesCompleteMediaTypes(ConsumesSpecified.Consumes consumes, Map mediaTypeSpec, Object actualConsumesSpec) {
+        return actualConsumesSpec.equals(findMediaTypeByName(consumes.name(), mediaTypeSpec));
+    }
+
+    private boolean matchesMediaTypeNames(ConsumesSpecified.Consumes consumes, Object actualConsumesSpec) {
+        return consumes.name().equals(actualConsumesSpec);
     }
 
     public Map<String, Object> normalize(Map<String, Object> input) {

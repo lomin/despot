@@ -18,7 +18,7 @@ public class DespotSpecParserTest {
     private final DespotSpecParser parser = new DespotSpecParser();
 
     @Test
-    public void returnsAllResponseCombinationIfEndpointAndMethodMatches() throws Exception {
+    public void returnsAllResponseCombinationIfEndpointAndMethodMatchesAndConsumes() throws Exception {
         Set<Map<String, Object>> spec = parser.getSpec(Method.GET, "/items/{path}", consumes("application/x-www-form-urlencoded"), getStream());
 
         assertEquals(5, spec.size());
@@ -33,9 +33,16 @@ public class DespotSpecParserTest {
 
     @Test
     public void returnsNoResponseCombinationIfMethodtDoesNotMatch() throws Exception {
-        Set<Map<String, Object>> spec = parser.getSpec(Method.POST, "/items/{path}", consumesNone(), getStream());
+        Set<Map<String, Object>> spec = parser.getSpec(Method.DELETE, "/items/{path}", consumesNone(), getStream());
 
         assertEquals(0, spec.size());
+    }
+
+    @Test
+    public void returnsResponseCombinationsForExpandedMediaType() throws Exception {
+        Set<Map<String, Object>> spec = parser.getSpec(Method.POST, "/items/{path}", consumes("application/vnd.itagile.product+json"), getStream());
+
+        assertEquals(1, spec.size());
     }
 
     @Test
